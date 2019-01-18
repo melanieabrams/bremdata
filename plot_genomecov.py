@@ -16,22 +16,6 @@ output: aligned plots
 bedgraphs = sys.argv[1:]
 
 
-
-#Test data: 
-
-##sp1	1	0
-##sp1	2	0
-##sp1	3	0
-##sp1	4	0
-##sp1	5	0
-##sp1	6	100
-##sp1	7	0
-##sp1	8	0
-##sp1	9	0
-##sp1	10	0
-
-
-
 def ParseFromFile(d_bedgraph):
     '''
     Input: -d bedgraph (i.e., with a value per
