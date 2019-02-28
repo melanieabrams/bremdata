@@ -6,7 +6,7 @@ import math
 import re
 
 ###USAGE###
-#python3 annotate_with_SGD_csv.py sgdflatfile output_folder file_to_annotate
+#python3 get_fisher_ranking.py fisher_test output_folder file_to_annotate
 
 #SGD flatfile location: /Users/Melanie/Desktop/Melanie/NGS/SGD_features.tab
 
@@ -19,37 +19,29 @@ def parse_file(filename, sep='\t'):
 	return df, file_identifier
 
 
-def ParseSGDFlat(sgdflatfile):
-    '''
-    Parses SGD features flat file
-    Input: SGD_features.tab file
-    Output: 
-    '''
-
+def rankFisher(fisherfile):
     descr_dict={}
+
+    lines_counter=1
     
-    f = open(sgdflatfile)
+    f = open(fisherfile)
     for line in f:
         row_data =line.split("\t")
-        yName=row_data[3]
-        try:
-                common_name=row_data[4]
-        except:
-                common_name=None
-        descr=row_data[15]
-        descr_dict[yName]=common_name,descr
+        yName=row_data[0]
+        descr_dict[yName]=lines_counter
+        lines_counter+=1
     return descr_dict
 
 
 
 if __name__ == '__main__':
     
-        sgdflatfile=sys.argv[1]
+        fisherfile=sys.argv[1]
         output_folder = argv[2].strip('/')
         files = argv[3:]
 
 
-        sgd_dict=ParseSGDFlat(sgdflatfile)
+        fisher_dict=rankFisher(fisherfile)
         
         file_id_dict = {}
         df_list = []
@@ -62,14 +54,12 @@ if __name__ == '__main__':
 
         for file_identifier, each_df in file_id_dict.items():
                 gene_names=each_df['gene']
-                common_names=[]
+                fisher_rank=[]
                 for gene_name in gene_names:
-                    common_names.append(sgd_dict[gene_name][0])
-                each_df['Common Name'] = common_names
-                #print(common_names)
-                annotations=[]
-                for gene_name in gene_names:
-                    annotations.append(sgd_dict[gene_name][1])
-                each_df['Annotations'] = annotations
-                each_df.to_csv(str(output_folder)+str('/')+str(file_identifier)+'.annotated__csv', sep='\t', index=False)
+                        try:
+                                fisher_rank.append(fisher_dict[gene_name])
+                        except KeyError:
+                                fisher_rank.append('unranked')
+                each_df['fisher_rank'] = fisher_rank
+                each_df.to_csv(str(output_folder)+str('/')+str(file_identifier)+'.ranked_csv', sep='\t', index=False)
 
