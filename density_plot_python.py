@@ -2,14 +2,14 @@ import sys
 import numpy as np
 
 import seaborn as sns                                                
-paper_rc = {'lines.linewidth': 5}                  
-sns.set_context("paper", rc = paper_rc)
+paper_rc = {'lines.linewidth': 10}                  
+sns.set_context("paper", rc = paper_rc,font_scale=5)
 
 import matplotlib.pyplot as plt
 
-#usage: python3 density_plot_python.py x.filtered_gene_inserts y.test_test_results
+#usage: python3 density_plot_python.py x.filtered_gene_inserts y.test_test_results 
 
-cutoff_num = 30 #how many top genes to look at
+cutoff_num = 10 #how many top genes to look at
 
 def ParseLogratios(insert_data,stats_dict):
     '''get the inserts' log2(39/28) for genes above cutoff'''
@@ -18,22 +18,34 @@ def ParseLogratios(insert_data,stats_dict):
     for key in stats_dict:
         sp_dict[key]=[]
         sc_dict[key]=[]
-        
+    
     f = open(insert_data)
+    header_line = True
     for line in f:
         #parse data
         row_data=line.split("\t")
-        gene=row_data[18]
-        if gene in stats_dict:
-            allele=row_data[19]
-            logr=float(row_data[15])
-            #add to sc or sp dict
-            if allele=='sp':
-                sp_dict[gene].append(logr)
-            elif allele=='sc':
-                sc_dict[gene].append(logr)
+        if header_line== True:
+            gene_index = row_data.index('gene')
+            allele_index = row_data.index('allele')
+            if '39_28_log2' in row_data:
+                logr_index=row_data.index('39_28_log2')
+            elif '39_28_log2_br_averaged_reads' in row_data:
+                logr_index=row_data.index('39_28_log2_br_averaged_reads')
+            header_line = False
+        else:
+            gene=row_data[gene_index]
+            if gene in stats_dict:
+                allele=row_data[allele_index]
+                logr=float(row_data[logr_index])
+                #add to sc or sp dict
+                if allele=='sp':
+                    sp_dict[gene].append(logr)
+                elif allele=='sc':
+                    sc_dict[gene].append(logr)
+
     f.close()
 
+    
     return sp_dict,sc_dict
 
 
@@ -59,14 +71,14 @@ def PlotDensity(spar_ins, scer_ins,geneName):
 ##
 ##    sns.distplot(scer_ins, hist = False, kde = True, kde_kws = {'linewidth':3},
 ##                 label= 'Insert in cerevisiae')
-    sns.kdeplot(spar_ins, bw='silverman', kernel='gau',label= 'Insert in paradoxus',color='orange')
-    sns.kdeplot(scer_ins, bw='silverman', kernel='gau',label= 'Insert in cerevisiae',color='blue')
+    sns.kdeplot(spar_ins, bw='silverman', kernel='gau',label= 'Insert in paradoxus',color='#08A5CD')
+    sns.kdeplot(scer_ins, bw='silverman', kernel='gau',label= 'Insert in cerevisiae',color='#F1B629')
     
-    plt.title(geneName,fontsize=50,loc='center')
-    plt.ylabel('Density of Inserts (kdeplot)', fontsize=50)
-    plt.xlabel('log2(39/28)', fontsize=50)
-    plt.rc('xtick',labelsize=22)
-    plt.rc('ytick',labelsize=22)
+    plt.title(geneName,fontsize=80,loc='center')
+    plt.ylabel('Density of Inserts (kdeplot)', fontsize=80)
+    plt.xlabel('log2(39/28)', fontsize=80)
+    plt.rc('xtick',labelsize=80)
+    plt.rc('ytick',labelsize=80)
     plt.savefig(figName, bbox_inches='tight', format='pdf',dpi=1000)
 
 def PlotDensities(stats_dict,sp_dict,sc_dict):
