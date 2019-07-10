@@ -146,7 +146,7 @@ def Map_Reads(): # uses usearch to map the reads
     
     sp.call(cmd)
 
-def Filter_for_ID_and_multimapping_and_pool(num_parsed_reads):  # filters our mapped reads that map below the ID threshold, those that map to multiple locations, then pools reads into insertion sites
+def Filter_for_ID_and_pool(num_parsed_reads):  # filters our mapped reads that map below the ID threshold, those that map to multiple locations, then pools reads into insertion sites
                                                                              # also filters out reads with barcodes that show up more than once
 
     mapped_file = out_dir+fastq_filename+"_mapped_reads" # where the mapped reads are
@@ -476,7 +476,7 @@ Map_Reads()  ## maps reads
 
 print("done mapping")
 
-loc_dict, reads_remaining = Filter_for_ID_and_multimapping_and_pool(num_parsed_reads)  # filters out reads below the identity threshold, that map to multiple locations and then pools insertions 
+loc_dict, reads_remaining = Filter_for_ID_and_pool(num_parsed_reads)  # filters out reads below the identity threshold, that map to multiple locations and then pools insertions 
 
 
 print("done filtering")
