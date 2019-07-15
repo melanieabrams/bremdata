@@ -5,7 +5,7 @@ import subprocess as sp
 import copy
 
 
-# PARAMETERS #    #Version 7-9-19 MBA, modified from CW's map_and_pool_BLAT.py
+# PARAMETERS #    #Version 7-15-19 MBA, modified from cweiss's map_and_pool_BLAT.py and scorad rbseq
 
 mapping_genome = "/usr2/people/carlyweiss/Amended_Genomes/Amended_Genomes/Concatenated/D1373_Z1.fa"  # location of the .udb database
 min_ID = str(95) # minimum identity cutoff for mapping reads.  Must be a decimel proportion (0-1)
@@ -14,6 +14,8 @@ gff = '/usr2/people/carlyweiss/SparScerinfo/YS2+CBS432+plasmid_clean' ## GFF to 
 min_read_cutoff = 0  ## this is only for reporting summary statistics
 min_genome_read_length = 50
 min_len_align = 40
+single_barcode = False #set to True if analyzing a test dataset with only one barcode
+maskOffByOne = True # when True, this treats low abundance barcodes that are off-by-one as a sequencing error and removes them from analysis
 
 min_id_pooling*=100
 
@@ -32,7 +34,8 @@ out_dir = sys.argv[2]
 
 # BEGIN FUNCTIONS # 
 
-def Filter_Reads(fastq_file):  ## filter out reads that do not have a TN sequence 
+def Filter_Reads(fastq_file):
+    '''modified from rh-seq, filter out reads that do not have a TN sequence or the universal primers for barcodes'''
 
     wf = open(out_dir+fastq_filename+'_parsed_reads','w')  # outfile for the trucated reads that will be mapped
 
@@ -130,6 +133,8 @@ def Filter_Reads(fastq_file):  ## filter out reads that do not have a TN sequenc
     wf.writelines("TN contaning reads too short that were discarded: "+str(reads_too_short)+" ("+str(100*reads_too_short/float(reads_with_tn))+"%)\n")
     print("TN containing reads with too many Ns: ", str(too_high_Ns), " ("+str(100*too_high_Ns/float(reads_with_tn))+"%)")
     wf.writelines("TN containing reads with too many Ns: "+str(too_high_Ns)+" ("+str(100*too_high_Ns/float(reads_with_tn))+"%)\n")
+    print("barcodes containing reads with too many Ns: ", str(too_high_Ns), " ("+str(100*too_high_Ns/float(reads_with_tn))+"%)")
+    wf.writelines("TN containing reads with too many Ns: "+str(too_high_Ns)+" ("+str(100*too_high_Ns/float(reads_with_tn))+"%)\n")
 
     wf.close()
 
@@ -138,7 +143,8 @@ def Filter_Reads(fastq_file):  ## filter out reads that do not have a TN sequenc
     return tot_parsed_reads
 
 
-def Map_Reads(): # uses usearch to map the reads
+def Map_Reads():
+    ''' from rh-seq, uses blat to map the reads'''
 
 #    cmd = ["/opt/bin/usearch8.1.1756_i86linux64", "-threads", nthreads, "-usearch_local",  out_dir+fastq_filename+"_parsed_reads", "-db", db, "-strand", "both", "-id", min_id, "-alnout", out_dir+fastq_filename+"_aligned_reads", "-maxhits", "2", "-notmatched", out_dir+fastq_filename+"_unmapped_reads", "-userout", out_dir+fastq_filename+"_mapped_reads", "-userfields", "query+target+id+alnlen+qstrand+tstrand+tlot+thit", "-mincols", "50", "-query_cov", ".95"]  # the command used to call usearch
 
@@ -146,8 +152,10 @@ def Map_Reads(): # uses usearch to map the reads
     
     sp.call(cmd)
 
-def Filter_for_ID_and_pool(num_parsed_reads):  # filters our mapped reads that map below the ID threshold, those that map to multiple locations, then pools reads into insertion sites
-                                                                             # also filters out reads with barcodes that show up more than once
+def Filter_for_ID_and_multimapping_and_pool(num_parsed_reads):
+    ''' modified from rh-seq
+    filters our mapped reads that map below the ID threshold, those that map to multiple locations, then pools reads into insertion sites
+    also filters out reads with barcodes that show up more than once'''
 
     mapped_file = out_dir+fastq_filename+"_mapped_reads" # where the mapped reads are
 
@@ -213,9 +221,15 @@ def Filter_for_ID_and_pool(num_parsed_reads):  # filters our mapped reads that m
     # filters our reads that map to more than one location # 
 
 
-    print("done making the read_dict")
+    print("...done making the read_dict...")
     
-    
+    barcode_lengths = {}
+    for barcode in read_dict.keys():
+        if len(barcode) in barcode_lengths.keys():
+            barcode_lengths[len(barcode)]+=1
+        else:
+            barcode_lengths[len(barcode)]=1
+        
     loc_dict = {}  # 
     for barcode in read_dict.keys():
         for map_loc in range(len(read_dict[barcode])):
@@ -224,7 +238,7 @@ def Filter_for_ID_and_pool(num_parsed_reads):  # filters our mapped reads that m
                 loc_dict[loc_name][1]+=1
             else:
                 loc_dict[loc_name]=[barcode,1]
-            
+
     print("total_mapped barcodes: ", str(total_mapped_reads), " ("+str(float(100*total_mapped_reads/num_parsed_reads))+"% of parsed reads)")
     print("mapped reads passing identity cutoff: "+str(reads_above_identity_threshold), "("+str(100*reads_above_identity_threshold/float(total_mapped_reads))+"%)")
     print("remaining reads mapping to one location: "+str(len(read_dict)), "("+str(100*len(read_dict)/float(reads_above_identity_threshold))+"%)")
@@ -234,13 +248,18 @@ def Filter_for_ID_and_pool(num_parsed_reads):  # filters our mapped reads that m
     wf.writelines("total mapped reads: "+str(total_mapped_reads)+" ("+str(float(100*total_mapped_reads/num_parsed_reads))+"% of parsed reads)\n")
     wf.writelines("mapped reads passing identity cutoff: "+str(reads_above_identity_threshold)+" "+str(100*reads_above_identity_threshold/float(total_mapped_reads))+"% of mapped reads\n")
     wf.writelines("remaining reads mapping to one location: "+str(len(read_dict))+" "+str(100*len(read_dict)/float(reads_above_identity_threshold))+"%\n")
+    
+    for size in barcode_lengths:
+        print("barcodes of length "+str(size) +": " + str(barcode_lengths[size]))
+        wf.writelines("barcodes of length "+str(size) +": " + str(barcode_lengths[size]))
 
     wf.close()
 
     return loc_dict, len(read_dict)
 
 
-def Combine_near_mappings(loc_dict, reads_remaining):  # # combines insertion sites that are within 3 bases of each other.  reads are assigned to the site with the initial max number of reads
+def Combine_near_mappings(loc_dict, reads_remaining):
+    '''modified from rh-seq, combines insertion sites that are within 3 bases of each other.  reads are assigned to the site with the initial max number of reads'''
 
     split_loc_dict = {}  # will hold hierarchical data on each insertion site.  keys for nested dictionaries are scaffold, strand, position and value is # reads mapping there. 
 
@@ -308,7 +327,8 @@ def Combine_near_mappings(loc_dict, reads_remaining):  # # combines insertion si
     return split_loc_dict
 
 def remove_multibarring (split_loc_dict, mapped_reads):
-
+    '''removes barcodes that map to multiple independent insertions
+    since those aren't useful for downstream analysis'''
     remaining_barcodes = [ ]
     duplicate_barcodes = [ ]
     #goes through dict and gets barcodes, finds duplicates
@@ -334,6 +354,74 @@ def remove_multibarring (split_loc_dict, mapped_reads):
     wf = open(out_dir+fastq_filename+"_mapping_stats", 'a')
     wf.writelines("removed "+str(number_nonunique)+" non-unique barcode insertions")
     return unique_split_loc_dict
+
+def OffByOneList(seq):
+    '''from rbdnaseq pipeline
+    generates a list of sequences off by one from the input
+    use this in maskOffByOne to mask barcodes that are off by one due to sequencing error'''
+    if seq[0] in ("A","T","G","C"):
+        char_set = ("A","T","G","C")
+    elif seq[0] in ("a","t","g","c"):
+        char_set = ("a","t","g","c")
+    else:
+        return False
+
+    variants = []
+    for chari in list(range(len(seq))):
+        if chari == 0:
+            preseq = ""
+        else:
+            preseq = seq[0:chari]
+        if chari == len(seq)-1:
+            postseq = ""
+        else:
+            postseq = seq[chari+1:]
+        for char in char_set:
+            if seq[chari] != char:
+                variants.append(preseq+char+postseq)
+    return(variants)
+
+def MaskOffByOne(split_loc_dict, mapped_reads):
+    '''modified from rbdnaseq pipeline'''
+
+    masked_split_loc_dict = copy.deepcopy(split_loc_dict)
+    offByOneList = [0]
+    totals = {}
+
+    for chrom in split_loc_dict: #build a dictionary of barcode-to-total-read
+        for strand in split_loc_dict[chrom]:
+            for pos in split_loc_dict[chrom][strand]:
+                barcode = split_loc_dict[chrom][strand][pos][1]
+                total = split_loc_dict[chrom][strand][pos][0]
+                totals[barcode]=totals
+    
+    for chrom in split_loc_dict: #go through and remove barcodes where an off-by-one variant is 100 times more common
+        for strand in split_loc_dict[chrom]:
+            for pos in split_loc_dict[chrom][strand]:
+                barcode = split_loc_dict[chrom][strand][pos][1]
+                offByOneList = [ ]
+                variants = OffByOneList(barcode)
+                offByOne = False
+                for variantBarcode in variants:
+                    if (not offByOne) & (variantBarcode in totals):
+                        if (totals[variantBarcode] > totals[barcode]*100):
+                            offByOne = True
+                            offByOneList.append(barcode)
+                            del masked_split_loc_dict[chrom][strand][pos]
+                
+    print("masked "+str(len(offByOneList))+" off-by-one barcodes")
+    return masked_split_loc_dict 
+    
+
+def clean_barcodes(split_loc_dict, mapped_reads, single_barcode=False, maskOffByOne=True):
+    if single_barcode == False:
+        split_loc_dict = remove_multibarring(split_loc_dict, mapped_reads)
+        print("...done removing non-unique barcodes...")
+    if maskOffByOne == True:
+        masked_unique_split_loc_dict = MaskOffByOne(split_loc_dict, mapped_reads)
+        print("...done masking off-by-one barcodes...")
+    return split_loc_dict
+
 
 def Annotate_insetions(split_loc_dict, mapped_reads):
 
@@ -474,18 +562,19 @@ def Annotate_insetions(split_loc_dict, mapped_reads):
 num_parsed_reads = Filter_Reads(read_file)  ## filters out reads that don't have tn sequence, writes the genomic portion of the remaining reads to a new file
 Map_Reads()  ## maps reads
 
-print("done mapping")
+print("...done mapping...")
 
-loc_dict, reads_remaining = Filter_for_ID_and_pool(num_parsed_reads)  # filters out reads below the identity threshold, that map to multiple locations and then pools insertions 
+loc_dict, reads_remaining = Filter_for_ID_and_multimapping_and_pool(num_parsed_reads)  # filters out reads below the identity threshold, that map to multiple locations and then pools insertions 
 
 
-print("done filtering")
+print("...done filtering...")
 loc_dict = Combine_near_mappings(loc_dict, reads_remaining) # combine insertions within 3bp of each other
 
-print("done combine near mappings")
+print("...done combine near mappings...")
 
-loc_dict = remove_multibarring(loc_dict, reads_remaining)
+loc_dict = clean_barcodes(loc_dict, reads_remaining,single_barcode=single_barcode, maskOffByOne=maskOffByOne)
 
-print("done removing non-unique barcodes")
 
 Annotate_insetions(loc_dict, reads_remaining) # identify insertions in genes, and write the final pooled outfile
+
+print ("...done annotating")
