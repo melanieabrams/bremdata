@@ -14,7 +14,7 @@ gff = '/usr2/people/carlyweiss/SparScerinfo/YS2+CBS432+plasmid_clean' ## GFF to 
 min_read_cutoff = 0  ## this is only for reporting summary statistics
 min_genome_read_length = 50
 min_len_align = 40
-single_barcode = False #set to True if analyzing a test dataset with only one barcode
+single_barcode = True #set to True if analyzing a test dataset with only one barcode
 maskOffByOne = True # when True, this treats low abundance barcodes that are off-by-one as a sequencing error and removes them from analysis
 
 min_id_pooling*=100
@@ -97,6 +97,10 @@ def Filter_Reads(fastq_file):
             reads_with_tn+=1  ## counts reads that have the tn sequence
             end_match = tn_match_data.end()  # finds the location in the read that the last tn base matches to
 
+            max_length_genome_read = 0 #update max genome length read...useful for diagnosis if all of them are too short
+            if len(genome_read)>max_length_genome_read:
+                max_length_genome_read = len(genome_read)
+
             #throw away reads that are too short or have too many Ns
             if len(genome_read) < min_genome_read_length: # if the length of the parsed read is less than min, throw it out.  50bp here is appropriate for 150bp reads.
                 reads_too_short+=1
@@ -131,6 +135,8 @@ def Filter_Reads(fastq_file):
     wf.writelines("proportion bases in TN containing reads that are 'N': "+ str(prop_Ns)+"\n")
     print("TN contaning reads too short that were discarded: ", str(reads_too_short), " ("+str(100*reads_too_short/float(reads_with_tn))+"%)")
     wf.writelines("TN contaning reads too short that were discarded: "+str(reads_too_short)+" ("+str(100*reads_too_short/float(reads_with_tn))+"%)\n")
+    print("max genome read length: " + str(max_length_genome_read))
+    wf.writelines("max genome read length: " + str(max_length_genome_read))
     print("TN containing reads with too many Ns: ", str(too_high_Ns), " ("+str(100*too_high_Ns/float(reads_with_tn))+"%)")
     wf.writelines("TN containing reads with too many Ns: "+str(too_high_Ns)+" ("+str(100*too_high_Ns/float(reads_with_tn))+"%)\n")
     print("barcodes containing reads with too many Ns: ", str(too_high_Ns), " ("+str(100*too_high_Ns/float(reads_with_tn))+"%)")
