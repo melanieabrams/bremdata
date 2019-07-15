@@ -98,8 +98,12 @@ def Filter_Reads(fastq_file):
             end_match = tn_match_data.end()  # finds the location in the read that the last tn base matches to
 
             max_length_genome_read = 0 #update max genome length read...useful for diagnosis if all of them are too short
+            longest_read = ''
             if len(genome_read)>max_length_genome_read:
                 max_length_genome_read = len(genome_read)
+                longest_read = read
+                longest_genome_read = genome_read
+    
 
             #throw away reads that are too short or have too many Ns
             if len(genome_read) < min_genome_read_length: # if the length of the parsed read is less than min, throw it out.  50bp here is appropriate for 150bp reads.
@@ -136,6 +140,9 @@ def Filter_Reads(fastq_file):
     print("TN contaning reads too short that were discarded: ", str(reads_too_short), " ("+str(100*reads_too_short/float(reads_with_tn))+"%)")
     wf.writelines("TN contaning reads too short that were discarded: "+str(reads_too_short)+" ("+str(100*reads_too_short/float(reads_with_tn))+"%)\n")
     print("max genome read length: " + str(max_length_genome_read))
+##    print("longest_read:")
+##    print(longest_read)
+##    print(longest_genome_read)
     wf.writelines("max genome read length: " + str(max_length_genome_read))
     print("TN containing reads with too many Ns: ", str(too_high_Ns), " ("+str(100*too_high_Ns/float(reads_with_tn))+"%)")
     wf.writelines("TN containing reads with too many Ns: "+str(too_high_Ns)+" ("+str(100*too_high_Ns/float(reads_with_tn))+"%)\n")
@@ -304,8 +311,8 @@ def Combine_near_mappings(loc_dict, reads_remaining):
                         split_loc_dict[chrom][strand][pos][0]+=split_loc_dict[chrom][strand][last][0]
                         reads_moved+=split_loc_dict[chrom][strand][last][0]
                         del split_loc_dict[chrom][strand][last]
-
                 last = pos
+                
             sorted_positions = sorted(split_loc_dict[chrom][strand])
             sorted_positions.reverse()
 
@@ -319,7 +326,7 @@ def Combine_near_mappings(loc_dict, reads_remaining):
                 if abs(int(pos) - int(last)) < 4:
                     if split_loc_dict[chrom][strand][pos][0] >= split_loc_dict[chrom][strand][last][0]:
                         split_loc_dict[chrom][strand][pos][0]+=split_loc_dict[chrom][strand][last][0]
-                        reads_moved+=split_loc_dict[chrom][strand][last]
+                        reads_moved+=split_loc_dict[chrom][strand][last][0]
                         del split_loc_dict[chrom][strand][last]
 
                 last = pos
