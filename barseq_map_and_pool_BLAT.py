@@ -570,6 +570,7 @@ def Annotate_insetions(split_loc_dict, mapped_reads,fastq_filename):
 
 def merge_all_tnseq(loc_dicts,merged_filename):
     print("merging_all_tnseq")
+    duplicate_reads = 0
     if len(loc_dicts)==1:
         return
     else:
@@ -584,8 +585,10 @@ def merge_all_tnseq(loc_dicts,merged_filename):
                             merged_dict[chrom][strand][pos]=loc_dict[chrom][strand][pos]
                         elif barcode == merged_dict[chrom][strand][pos][1]: #if same barcode, add to total
                             merged_dict[chrom][strand][pos][0]+=total
+                            duplicate_reads+=1
                         else:
                             merged_dict[chrom][strand][pos].append(loc_dict[chrom][strand][pos])
+        print("combined "+str(duplicate_reads)+" duplicate inserts from different fastq")
         merged_dict = clean_barcodes(merged_dict, reads_remaining,single_barcode=single_barcode, maskOffByOne=maskOffByOne)
         Annotate_insetions(merged_dict, reads_remaining, merged_filename) # identify insertions in genes, and write the final pooled outfile for a given fastq
         print ("...done annotating")
@@ -617,5 +620,5 @@ for read_file in read_files:
 if len(loc_dicts)>1:
     now = datetime.datetime.now()
     print()
-    merged_filename = "merged_tnseq_"+now.strftime("%Y-%m-%d")
+    merged_filename = "merged_tnseq_"+now.strftime("%Y-%m-%d")+'.'
     merge_all_tnseq(loc_dicts,merged_filename) #merge dictionaries and make final pooled outfile for all fastq
