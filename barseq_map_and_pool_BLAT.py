@@ -324,11 +324,11 @@ def Combine_near_mappings(loc_dict, reads_remaining):
                         del split_loc_dict[chrom][strand][last]
 
                 last = pos
-    print("remaining reads moved to higher peak: ", str(reads_moved), "("+str(100*float(reads_moved)/reads_remaining)[:4]+"%)")
+    print("remaining reads moved to higher peak: ", str(reads_moved), "("+str(100*float(reads_moved)/reads_remaining)[:4]+"% of mapped barcodes)")
     
 
     wf = open(out_dir+fastq_filename+"_mapping_stats", 'a')
-    wf.writelines("remaining reads moved to higher peak: "+str(reads_moved)+" "+str(100*float(reads_moved)/reads_remaining)[:4]+"%\n")
+    wf.writelines("remaining reads moved to higher peak: "+str(reads_moved)+" "+str(100*float(reads_moved)/reads_remaining)[:4]+"% of mapped barcodes\n")
     wf.close()
 
     return split_loc_dict
