@@ -12,7 +12,7 @@ min_ID = str(95) # minimum identity cutoff for mapping reads.  Must be a decimel
 min_id_pooling = .95 # minimum identity for reads at the pooling stage.  Can be different then at mapping.  Must be (0-1)
 gff = '/usr2/people/carlyweiss/SparScerinfo/YS2+CBS432+plasmid_clean' ## GFF to use for annotations.  
 min_read_cutoff = 0  ## this is only for reporting summary statistics
-min_genome_read_length = 50
+min_genome_read_length = 40
 min_len_align = 40
 single_barcode = True #set to True if analyzing a test dataset with only one barcode
 maskOffByOne = True # when True, this treats low abundance barcodes that are off-by-one as a sequencing error and removes them from analysis
@@ -54,6 +54,7 @@ def Filter_Reads(fastq_file):
     total_bases = 0
     reads_too_short = 0
     too_high_Ns = 0
+    max_length_genome_read = 0 
     f = open(fastq_file) # the file with the reads
     
     for line in f:
@@ -96,10 +97,9 @@ def Filter_Reads(fastq_file):
             total_Ns+=read.count('N') # counts the numer of Ns per read
             reads_with_tn+=1  ## counts reads that have the tn sequence
             end_match = tn_match_data.end()  # finds the location in the read that the last tn base matches to
-
-            max_length_genome_read = 0 #update max genome length read...useful for diagnosis if all of them are too short
-            longest_read = ''
-            if len(genome_read)>max_length_genome_read:
+            
+            longest_read = '' #update max genome length read...useful for diagnosis if all of them are too short
+            if len(genome_read) > max_length_genome_read:
                 max_length_genome_read = len(genome_read)
                 longest_read = read
                 longest_genome_read = genome_read
@@ -116,7 +116,6 @@ def Filter_Reads(fastq_file):
 
             
             # writes a new fastq file that has the filtered read and only the regions TTAA--genome.  The TN sequence is removed, and the header is appended with the barcode
-            
             wf.writelines(">"+barcode+"\n")
             wf.writelines(genome_read+"\n")
            # wf.writelines("+\n")
@@ -143,6 +142,7 @@ def Filter_Reads(fastq_file):
 ##    print("longest_read:")
 ##    print(longest_read)
 ##    print(longest_genome_read)
+##    print(len(longest_genome_read) < min_genome_read_length)
     wf.writelines("max genome read length: " + str(max_length_genome_read))
     print("TN containing reads with too many Ns: ", str(too_high_Ns), " ("+str(100*too_high_Ns/float(reads_with_tn))+"%)")
     wf.writelines("TN containing reads with too many Ns: "+str(too_high_Ns)+" ("+str(100*too_high_Ns/float(reads_with_tn))[:4]+"%)\n")
@@ -410,8 +410,12 @@ def MaskOffByOne(split_loc_dict, mapped_reads):
         for strand in split_loc_dict[chrom]:
             for pos in split_loc_dict[chrom][strand]:
                 barcode = split_loc_dict[chrom][strand][pos][1]
-                
                 variants = OffByOneList(barcode)
+##                if barcode != 'TAAGCAACCTCGGCGCATAG':
+##                    print(barcode)
+##                    print(variants)
+##                    print('TAAGCAACCTCGGCGCATAG' in variants)
+##                    print(totals[barcode],totals['TAAGCAACCTCGGCGCATAG'])
                 offByOne = False
                 for variantBarcode in variants:
                     if (not offByOne) & (variantBarcode in totals):
@@ -610,7 +614,8 @@ for read_file in read_files:
     print ("...done annotating")
     loc_dicts.append(loc_dict)
 
-now = datetime.datetime.now()
-print()
-merged_filename = "merged_tnseq_"+now.strftime("%Y-%m-%d")
-merge_all_tnseq(loc_dicts,merged_filename) #merge dictionaries and make final pooled outfile for all fastq
+if len(loc_dicts)>1:
+    now = datetime.datetime.now()
+    print()
+    merged_filename = "merged_tnseq_"+now.strftime("%Y-%m-%d")
+    merge_all_tnseq(loc_dicts,merged_filename) #merge dictionaries and make final pooled outfile for all fastq
