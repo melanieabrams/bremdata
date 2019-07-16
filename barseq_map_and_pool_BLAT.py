@@ -250,15 +250,15 @@ def Filter_for_ID_and_multimapping_and_pool(num_parsed_reads):
             else:
                 loc_dict[loc_name]=[barcode,1]
 
-    print("total_mapped barcodes: ", str(total_mapped_reads), " ("+str(float(100*total_mapped_reads/num_parsed_reads))+"% of parsed reads)")
-    print("mapped reads passing identity cutoff: "+str(reads_above_identity_threshold), "("+str(100*reads_above_identity_threshold/float(total_mapped_reads))+"%)")
-    print("remaining reads mapping to one location: "+str(len(read_dict)), "("+str(100*len(read_dict)/float(reads_above_identity_threshold))+"%)")
+    print("total_mapped barcodes: ", str(total_mapped_reads), " ("+str(float(100*total_mapped_reads/num_parsed_reads))[:4]+"% of parsed reads)")
+    print("mapped reads passing identity cutoff: "+str(reads_above_identity_threshold), "("+str(100*reads_above_identity_threshold/float(total_mapped_reads))[:4]+"% of mapped barcodes)")
+    print("remaining reads mapping to one location: "+str(len(read_dict)), "("+str(100*len(read_dict)/float(reads_above_identity_threshold))[:4]+"%)")
 
     wf = open(out_dir+fastq_filename+"_mapping_stats", 'a')
 
-    wf.writelines("total mapped reads: "+str(total_mapped_reads)+" ("+str(float(100*total_mapped_reads/num_parsed_reads))+"% of parsed reads)\n")
-    wf.writelines("mapped barcodes passing identity cutoff: "+str(reads_above_identity_threshold)+" "+str(100*reads_above_identity_threshold/float(total_mapped_reads))+"% of mapped reads\n")
-    wf.writelines("remaining barcodes mapping to one location: "+str(len(read_dict))+" "+str(100*len(read_dict)/float(reads_above_identity_threshold))+"%\n")
+    wf.writelines("total mapped reads: "+str(total_mapped_reads)+" ("+str(float(100*total_mapped_reads/num_parsed_reads))[:4]+"% of parsed reads)\n")
+    wf.writelines("mapped reads passing identity cutoff: "+str(reads_above_identity_threshold)+" "+str(100*reads_above_identity_threshold/float(total_mapped_reads))[:4]+"% of mapped barcodes\n")
+    wf.writelines("remaining barcodes mapping to one location: "+str(len(read_dict))+" "+str(100*len(read_dict)/float(reads_above_identity_threshold))[:4]+"%\n")
 
     wf.close()
 
@@ -324,11 +324,11 @@ def Combine_near_mappings(loc_dict, reads_remaining):
                         del split_loc_dict[chrom][strand][last]
 
                 last = pos
-    print("remaining reads moved to higher peak: ", str(reads_moved), "("+str(100*float(reads_moved)/reads_remaining)+"%)")
+    print("remaining reads moved to higher peak: ", str(reads_moved), "("+str(100*float(reads_moved)/reads_remaining)[:4]+"%)")
     
 
     wf = open(out_dir+fastq_filename+"_mapping_stats", 'a')
-    wf.writelines("remaining reads moved to higher peak: "+str(reads_moved)+" "+str(100*float(reads_moved)/reads_remaining)+"%\n")
+    wf.writelines("remaining reads moved to higher peak: "+str(reads_moved)+" "+str(100*float(reads_moved)/reads_remaining)[:4]+"%\n")
     wf.close()
 
     return split_loc_dict
