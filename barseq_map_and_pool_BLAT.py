@@ -5,7 +5,7 @@ import subprocess as sp
 import copy
 import datetime
 
-# PARAMETERS #    #Version 7-15-19 MBA, modified from cweiss's map_and_pool_BLAT.py and scorad rbseq
+# PARAMETERS #    #Version 7-16-19 MBA, modified from cweiss's map_and_pool_BLAT.py and scorad rbseq
 
 mapping_genome = "/usr2/people/carlyweiss/Amended_Genomes/Amended_Genomes/Concatenated/D1373_Z1.fa"  # location of the .udb database
 min_ID = str(95) # minimum identity cutoff for mapping reads.  Must be a decimel proportion (0-1)
