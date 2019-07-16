@@ -3,7 +3,7 @@ import numpy as np
 import sys
 import subprocess as sp
 import copy
-
+import datetime
 
 # PARAMETERS #    #Version 7-15-19 MBA, modified from cweiss's map_and_pool_BLAT.py and scorad rbseq
 
@@ -22,15 +22,15 @@ min_id_pooling*=100
 # HELP #
 
 if len(sys.argv) == 1:
-    print("USAGE: python map_PB_reads.py fastq_file out_directory")
+    print("USAGE: python map_PB_reads.py out_directory fastq_file1 fastq_file2")
     exit()
     
 # INPUT # 
+out_dir = sys.argv[1]
+read_files = sys.argv[2:]  
 
-read_file = sys.argv[1]  
-fastq_filename = read_file.split("/")[-1]
 
-out_dir = sys.argv[2]
+
 
 # BEGIN FUNCTIONS # 
 
@@ -125,7 +125,7 @@ def Filter_Reads(fastq_file):
     wf.close()    
 
     prop_Ns = float(total_Ns) / total_bases # gets the proportion of Ns in the fastq file as an indicator for overall sequence quality
-
+    prop_Ns = round(prop_Ns,2)
 
     wf = open(out_dir+fastq_filename+"_mapping_stats", 'w')  # the file that will contain summary stats of the mapping and additional analysis
 
@@ -133,21 +133,21 @@ def Filter_Reads(fastq_file):
 
     print("total_reads: ", str(tot_reads))
     wf.writelines("total_reads: "+str(tot_reads)+"\n")
-    print("reads with tn: ", str(reads_with_tn), " ("+str(100*reads_with_tn/tot_reads)+"%)")
-    wf.writelines("reads with TN: "+str(reads_with_tn)+" ("+str(100*reads_with_tn/tot_reads)+"%)\n")
+    print("reads with tn: ", str(reads_with_tn), " ("+str(100*reads_with_tn/tot_reads)[:4]+"%)")
+    wf.writelines("reads with TN: "+str(reads_with_tn)+" ("+str(100*reads_with_tn/tot_reads)[:4]+"%)\n")
     print("proportion bases in TN containing reads that are 'N': ", str(prop_Ns))
     wf.writelines("proportion bases in TN containing reads that are 'N': "+ str(prop_Ns)+"\n")
-    print("TN contaning reads too short that were discarded: ", str(reads_too_short), " ("+str(100*reads_too_short/float(reads_with_tn))+"%)")
-    wf.writelines("TN contaning reads too short that were discarded: "+str(reads_too_short)+" ("+str(100*reads_too_short/float(reads_with_tn))+"%)\n")
+    print("TN contaning reads too short that were discarded: ", str(reads_too_short), " ("+str(100*reads_too_short/float(reads_with_tn))[:4]+"%)")
+    wf.writelines("TN contaning reads too short that were discarded: "+str(reads_too_short)+" ("+str(100*reads_too_short/float(reads_with_tn))[:4]+"%)\n")
     print("max genome read length: " + str(max_length_genome_read))
 ##    print("longest_read:")
 ##    print(longest_read)
 ##    print(longest_genome_read)
     wf.writelines("max genome read length: " + str(max_length_genome_read))
     print("TN containing reads with too many Ns: ", str(too_high_Ns), " ("+str(100*too_high_Ns/float(reads_with_tn))+"%)")
-    wf.writelines("TN containing reads with too many Ns: "+str(too_high_Ns)+" ("+str(100*too_high_Ns/float(reads_with_tn))+"%)\n")
-    print("barcodes containing reads with too many Ns: ", str(too_high_Ns), " ("+str(100*too_high_Ns/float(reads_with_tn))+"%)")
-    wf.writelines("TN containing reads with too many Ns: "+str(too_high_Ns)+" ("+str(100*too_high_Ns/float(reads_with_tn))+"%)\n")
+    wf.writelines("TN containing reads with too many Ns: "+str(too_high_Ns)+" ("+str(100*too_high_Ns/float(reads_with_tn))[:4]+"%)\n")
+    print("barcodes containing reads with too many Ns: ", str(too_high_Ns), " ("+str(100*too_high_Ns/float(reads_with_tn))[:4]+"%)")
+    wf.writelines("TN containing reads with too many Ns: "+str(too_high_Ns)+" ("+str(100*too_high_Ns/float(reads_with_tn))[:4]+"%)\n")
 
     wf.close()
 
@@ -181,8 +181,7 @@ def Filter_for_ID_and_multimapping_and_pool(num_parsed_reads):
     total_mapped_reads = 0 ###  CHANGE THIS BACK TO 0
     reads_above_identity_threshold = 0
     mulitmapped_reads = 0
-    multibarred_reads = 0
-    
+
     all_read_list = set()
 
     for line in f:
@@ -207,7 +206,8 @@ def Filter_for_ID_and_multimapping_and_pool(num_parsed_reads):
         if len_align < min_len_align or start_align > 3:
             continue
 
-        reads_above_identity_threshold+=1  # this counts reads that are above the identity threshold and length of aligment threshold and in which the alignment starts within 3pbs of the read TTAA
+        reads_above_identity_threshold+=1  # this counts reads that are above the identity threshold and length of aligment threshold and in which the alignment starts within 3bps of the read TTAA
+        
         start = line[8]
         end = line[9]
 
@@ -219,8 +219,6 @@ def Filter_for_ID_and_multimapping_and_pool(num_parsed_reads):
         insertion_loc = start
         
         loc = line[1]+"__"+strand+"__"+insertion_loc  ## This is the identifier for the insertion. scaffold+strand+position
-
-
 
 
         # searches for reads that map to more than 1 locatiion # 
@@ -259,12 +257,8 @@ def Filter_for_ID_and_multimapping_and_pool(num_parsed_reads):
     wf = open(out_dir+fastq_filename+"_mapping_stats", 'a')
 
     wf.writelines("total mapped reads: "+str(total_mapped_reads)+" ("+str(float(100*total_mapped_reads/num_parsed_reads))+"% of parsed reads)\n")
-    wf.writelines("mapped reads passing identity cutoff: "+str(reads_above_identity_threshold)+" "+str(100*reads_above_identity_threshold/float(total_mapped_reads))+"% of mapped reads\n")
-    wf.writelines("remaining reads mapping to one location: "+str(len(read_dict))+" "+str(100*len(read_dict)/float(reads_above_identity_threshold))+"%\n")
-    
-    for size in barcode_lengths:
-        print("barcodes of length "+str(size) +": " + str(barcode_lengths[size]))
-        wf.writelines("barcodes of length "+str(size) +": " + str(barcode_lengths[size]))
+    wf.writelines("mapped barcodes passing identity cutoff: "+str(reads_above_identity_threshold)+" "+str(100*reads_above_identity_threshold/float(total_mapped_reads))+"% of mapped reads\n")
+    wf.writelines("remaining barcodes mapping to one location: "+str(len(read_dict))+" "+str(100*len(read_dict)/float(reads_above_identity_threshold))+"%\n")
 
     wf.close()
 
@@ -406,21 +400,26 @@ def MaskOffByOne(split_loc_dict, mapped_reads):
             for pos in split_loc_dict[chrom][strand]:
                 barcode = split_loc_dict[chrom][strand][pos][1]
                 total = split_loc_dict[chrom][strand][pos][0]
-                totals[barcode]=totals
-    
+                if barcode in totals:
+                    totals[barcode]+=total
+                else:
+                    totals[barcode]=total
+                    
+    offByOneList = [ ]
     for chrom in split_loc_dict: #go through and remove barcodes where an off-by-one variant is 100 times more common
         for strand in split_loc_dict[chrom]:
             for pos in split_loc_dict[chrom][strand]:
                 barcode = split_loc_dict[chrom][strand][pos][1]
-                offByOneList = [ ]
+                
                 variants = OffByOneList(barcode)
                 offByOne = False
                 for variantBarcode in variants:
                     if (not offByOne) & (variantBarcode in totals):
                         if (totals[variantBarcode] > totals[barcode]*100):
-                            offByOne = True
                             offByOneList.append(barcode)
                             del masked_split_loc_dict[chrom][strand][pos]
+                            offByOne = True
+
                 
     print("masked "+str(len(offByOneList))+" off-by-one barcodes")
     return masked_split_loc_dict 
@@ -436,7 +435,7 @@ def clean_barcodes(split_loc_dict, mapped_reads, single_barcode=False, maskOffBy
     return split_loc_dict
 
 
-def Annotate_insetions(split_loc_dict, mapped_reads):
+def Annotate_insetions(split_loc_dict, mapped_reads,fastq_filename):
 
     out_filename = out_dir+fastq_filename+"_pooled_reads"  # the final output, this will hold the pooled insertion table                                                                      
     wf = open(out_filename,'w')
@@ -520,9 +519,6 @@ def Annotate_insetions(split_loc_dict, mapped_reads):
 
     wf.close()
 
-
-
-    
     f = open(out_filename)
     for line in f:
         if line[:2] != 'pl':
@@ -568,26 +564,53 @@ def Annotate_insetions(split_loc_dict, mapped_reads):
     wf.close()
 
 
+def merge_all_tnseq(loc_dicts,merged_filename):
+    print("merging_all_tnseq")
+    if len(loc_dicts)==1:
+        return
+    else:
+        merged_dict = loc_dicts[0]
+        for loc_dict in loc_dicts[1:]:
+            for chrom in loc_dict:
+                for strand in loc_dict[chrom]:
+                    for pos in loc_dict[chrom][strand]:
+                        barcode = loc_dict[chrom][strand][pos][1]
+                        total = loc_dict[chrom][strand][pos][0]
+                        if pos not in merged_dict[chrom][strand]: # add an insert to the merged dict if not already one at that position
+                            merged_dict[chrom][strand][pos]=loc_dict[chrom][strand][pos]
+                        elif barcode == merged_dict[chrom][strand][pos][1]: #if same barcode, add to total
+                            merged_dict[chrom][strand][pos][0]+=total
+                        else:
+                            merged_dict[chrom][strand][pos].append(loc_dict[chrom][strand][pos])
+        merged_dict = clean_barcodes(merged_dict, reads_remaining,single_barcode=single_barcode, maskOffByOne=maskOffByOne)
+        Annotate_insetions(merged_dict, reads_remaining, merged_filename) # identify insertions in genes, and write the final pooled outfile for a given fastq
+        print ("...done annotating")
+    return
+                            
+                        
+
 
                 
 #### START PROGRAM ####
 
-num_parsed_reads = Filter_Reads(read_file)  ## filters out reads that don't have tn sequence, writes the genomic portion of the remaining reads to a new file
-Map_Reads()  ## maps reads
+loc_dicts = [] 
 
-print("...done mapping...")
+for read_file in read_files:
+    fastq_filename = read_file.split("/")[-1] #get file name 
+    print('\n'+fastq_filename+'\n') 
+    num_parsed_reads = Filter_Reads(read_file)  ## filters out reads that don't have tn sequence, writes the genomic portion of the remaining reads to a new file
+    Map_Reads()  ## maps reads
+    print("...done mapping...")
+    loc_dict, reads_remaining = Filter_for_ID_and_multimapping_and_pool(num_parsed_reads)  # filters out reads below the identity threshold, that map to multiple locations and then pools insertions 
+    print("...done filtering...")
+    loc_dict = Combine_near_mappings(loc_dict, reads_remaining) # combine insertions within 3bp of each other
+    print("...done combine near mappings...")
+    loc_dict = clean_barcodes(loc_dict, reads_remaining,single_barcode=single_barcode, maskOffByOne=maskOffByOne)
+    Annotate_insetions(loc_dict, reads_remaining, fastq_filename) # identify insertions in genes, and write the final pooled outfile for a given fastq
+    print ("...done annotating")
+    loc_dicts.append(loc_dict)
 
-loc_dict, reads_remaining = Filter_for_ID_and_multimapping_and_pool(num_parsed_reads)  # filters out reads below the identity threshold, that map to multiple locations and then pools insertions 
-
-
-print("...done filtering...")
-loc_dict = Combine_near_mappings(loc_dict, reads_remaining) # combine insertions within 3bp of each other
-
-print("...done combine near mappings...")
-
-loc_dict = clean_barcodes(loc_dict, reads_remaining,single_barcode=single_barcode, maskOffByOne=maskOffByOne)
-
-
-Annotate_insetions(loc_dict, reads_remaining) # identify insertions in genes, and write the final pooled outfile
-
-print ("...done annotating")
+now = datetime.datetime.now()
+print()
+merged_filename = "merged_tnseq_"+now.strftime("%Y-%m-%d")
+merge_all_tnseq(loc_dicts,merged_filename) #merge dictionaries and make final pooled outfile for all fastq
