@@ -5,7 +5,7 @@ import subprocess as sp
 import copy
 import datetime
 
-# PARAMETERS #    #Version 7-16-19 MBA, modified from cweiss's map_and_pool_BLAT.py and scorad rbseq
+# PARAMETERS #    #Version 8-6-19 MBA, modified from cweiss's map_and_pool_BLAT.py and scorad rbseq
 
 mapping_genome = "/usr2/people/carlyweiss/Amended_Genomes/Amended_Genomes/Concatenated/D1373_Z1.fa"  # location of the .udb database
 min_ID = str(95) # minimum identity cutoff for mapping reads.  Must be a decimel proportion (0-1)
@@ -577,6 +577,8 @@ def merge_all_tnseq(loc_dicts,merged_filename):
         merged_dict = loc_dicts[0]
         for loc_dict in loc_dicts[1:]:
             for chrom in loc_dict:
+                if chrom not in merged_dict:
+                    merged_dict[chrom] = {'+' : {}, '-' : {}}
                 for strand in loc_dict[chrom]:
                     for pos in loc_dict[chrom][strand]:
                         barcode = loc_dict[chrom][strand][pos][1]
