@@ -526,7 +526,8 @@ def merge_all_tnseq(loc_dicts,merged_filename):
                         for barcode in loc_dict[chrom][strand][pos]:
                             total = loc_dict[chrom][strand][pos][barcode]
                             if pos not in merged_dict[chrom][strand]: # add an insert to the merged dict if not already one at that position
-                                merged_dict[chrom][strand][pos]=loc_dict[chrom][strand][pos]
+                                merged_dict[chrom][strand][pos]={}
+                                merged_dict[chrom][strand][pos][barcode]=loc_dict[chrom][strand][pos][barcode]
                             elif barcode in merged_dict[chrom][strand][pos]: #if same barcode, add to total
                                 merged_dict[chrom][strand][pos][barcode]+=total
                                 duplicate_reads+=1
