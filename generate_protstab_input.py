@@ -3,9 +3,12 @@ import sys
 
 
 # PARAMETERS #    
-ref_genome = "/usr2/people/mabrams/Amended_Genomes/Z1/Z1_global_ref.fa"  # looking for temp in Z1 since that's where I'd expect these genes to be unstable
+ref_genome ='/usr2/people/mabrams/Amended_Genomes/concatenated/D1373_Z1.fa'
+#for Z1 only:
+#ref_genome = "/usr2/people/mabrams/Amended_Genomes/Z1/Z1_global_ref.fa"  # first looked for temp in Z1 since that's where I'd expect these genes to be unstable
 gff = '/usr2/people/carlyweiss/SparScerinfo/YS2+CBS432+plasmid_clean' ## GFF to use for annotations.  
 
+species='sc' #or sp with this gff
 genes_of_interest=['YLR397C','YGR098C','YMR168C','YKR054C','YDR180W','YHR023W','YGR198W','YHR166C','YCR042C']
 
 
@@ -31,7 +34,7 @@ def get_gff_dict(gff):
 
         # put the annotation information in a dictionary #                                                                                                                                    
         if ann_type=='CDS':
-            if gene[:2]=='sp': #because pulling from combined sp/sc annotation file
+            if gene[:2]==species: #because pulling from combined sp/sc annotation file
                 gene=gene[2:]
                 gff_dict[gene] = [chrom, start, end, strand]
 
@@ -102,7 +105,7 @@ def build_fa_goi(genes_of_interest, gff_dict, chrom_dict,mode='DNA'):
 
     nt_table={'A':'T','T':'A','C':'G','G':'C'}
 
-    wf = open(yNames+mode+'.fa','w')
+    wf = open(species+yNames+mode+'.fa','w')
     for gene in genes_of_interest:
         print(gene)
         
@@ -114,7 +117,10 @@ def build_fa_goi(genes_of_interest, gff_dict, chrom_dict,mode='DNA'):
         strand=gff_dict[gene][3]
 
         #get DNA seq from genome
-        seq=chrom_dict[chrom][start-1:end]
+        try:
+            seq=chrom_dict[chrom][start-1:end]
+        except KeyError:
+            print(chrom_dict.keys(), chrom)
         if strand=='-':
 ##            if gene=='YPL174C':
 ##                print('here')
