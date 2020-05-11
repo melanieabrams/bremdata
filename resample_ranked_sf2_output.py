@@ -72,6 +72,9 @@ def ParseRankedGenes(ranked_genes_sf2):
             ranked_dict[gene]=LR
     f.close()
 
+    for gene in goi:
+        print("LR of "+gene+": "+str(ranked_dict[gene]))
+
 ##    print(ranked_dict)
 ##    print(ranked_dict['YLR397C'])
 
