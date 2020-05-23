@@ -3,7 +3,7 @@ from statistics import median
 import random
 
 '''
-resample ranked sweepfinder 2 outputs by gene
+resample ranked h12 H2/H1 ratios by gene (accounting for essentiality)
  
 '''
 #Parameters
@@ -17,7 +17,7 @@ goi=['YLR397C','YGR098C', 'YMR168C','YKR054C','YDR180W',
      'YHR023W','YGR198W','YHR166C','YCR042C','YPL174C']
 
 ###
-ranked_genes_sf2 = sys.argv[1]
+ranked_genes_h12 = sys.argv[1]
 
 
 def ParseFromGFF(gfffile):
@@ -79,27 +79,28 @@ def test_goi_in_gff(goi):
     print("tested the following goi: "+' '.join(present))
     return present
 
-def ParseRankedGenes(ranked_genes_sf2):
+def ParseRankedGenes(ranked_genes_h12):
     '''
-    Input: ranked sf2 file
-    Output: dictionary of gene:LR
+    Input: ranked h12 file
+    Output: dictionary of gene:H2H1
     '''
 
     ranked_dict={}      
     #add position and coverage for each base to a dictionary for that chromosome
-    f = open(ranked_genes_sf2)
+    f = open(ranked_genes_h12)
     next(f)
     for line in f:
         row_data = line.strip().split("\t")
        # print(row_data)
         if row_data[0][0]=="Y" and len(row_data[0])>4:
             gene=row_data[0]
-            LR=float(row_data[1])
-            ranked_dict[gene]=LR
+            H12=float(row_data[1])
+            H2H1=float(row_data[2])
+            ranked_dict[gene]=H2H1
     f.close()
 
     for gene in goi:
-        print("LR of "+gene+": "+str(ranked_dict[gene]))
+        print("H2H1 of "+gene+": "+str(ranked_dict[gene]))
 
 ##    print(ranked_dict)
 ##    print(ranked_dict['YLR397C'])
@@ -107,53 +108,56 @@ def ParseRankedGenes(ranked_genes_sf2):
     return ranked_dict
 
 
-def resample(LR_dict, essential_genes, n_resample=10000):
+def resample(H2H1_dict, essential_genes, n_resample=10000):
     '''resamples same num essential and nonessential genes'''
 
-    #get goi LRs and see if they're essential
-    goi_LRs=[]
+    #get goi H2H1s and see if they're essential
+    goi_H2H1s=[]
     num_essential_goi=0
     for gene in goi:
-        goi_LRs.append(LR_dict[gene])
+        goi_H2H1s.append(H2H1_dict[gene])
         if gene in essential_genes:
             num_essential_goi+=1
-    num_goi=len(goi_LRs)
+    num_goi=len(goi_H2H1s)
     num_nonessential_goi=num_goi-num_essential_goi
 
     print('number essential goi : '+str(num_essential_goi))
     print('number nonessential goi: '+str(num_nonessential_goi))
         
-    my_median=median(goi_LRs)
+    my_median=median(goi_H2H1s)
 
-    #split all tested LRs into essential and nonessential
-    ess_LRdict={}
-    noness_LRdict={}
-    for gene in LR_dict:
+    #split all tested H2H1s into essential and nonessential
+    ess_H2H1dict={}
+    noness_H2H1dict={}
+    for gene in H2H1_dict:
         if gene in essential_genes:
-            ess_LRdict[gene]=LR_dict[gene]
+            ess_H2H1dict[gene]=H2H1_dict[gene]
         else:
-            noness_LRdict[gene]=LR_dict[gene]
+            noness_H2H1dict[gene]=H2H1_dict[gene]
 
     
 
     greater_medians=0.0
+    random_medians=[]
 
     #add the correct number of essential and nonessential random genes, and then see how many random groups >median
     for i in range(n_resample):
-        random_LRs=[]
+        random_H2H1s=[]
         for n in range(num_essential_goi):
-            random_gene=random.choice(list(ess_LRdict))
-            random_LRs.append(LR_dict[random_gene])
+            random_gene=random.choice(list(ess_H2H1dict))
+            random_H2H1s.append(H2H1_dict[random_gene])
         for n in range(num_nonessential_goi):
-            random_gene=random.choice(list(noness_LRdict))
-            random_LRs.append(LR_dict[random_gene])
-        random_median=median(random_LRs)
+            random_gene=random.choice(list(noness_H2H1dict))
+            random_H2H1s.append(H2H1_dict[random_gene])
+        random_median=median(random_H2H1s)
+        random_medians.append(random_median)
         if random_median>my_median:
             greater_medians+=1
 
     rv=greater_medians/float(n_resample)
     print('rv: '+str(rv))
     print('n_resample: '+str(n_resample))
+    print('median random median: ' +str(median(random_medians))+', goi median: '+str(my_median))
         
     
     
@@ -166,5 +170,5 @@ gff_genes=ParseFromGFF(gff)
 tested_goi=test_goi_in_gff(goi)
 
 essential_genes=ParseEssential(essential_genes)
-LR_dict=ParseRankedGenes(ranked_genes_sf2)
-resample(LR_dict,essential_genes)
+H2H1_dict=ParseRankedGenes(ranked_genes_h12)
+resample(H2H1_dict,essential_genes)
