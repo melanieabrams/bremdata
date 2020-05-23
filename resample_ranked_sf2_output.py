@@ -137,6 +137,7 @@ def resample(LR_dict, essential_genes, n_resample=10000):
     
 
     greater_medians=0.0
+    random_medians=[]
 
     #add the correct number of essential and nonessential random genes, and then see how many random groups >median
     for i in range(n_resample):
@@ -148,12 +149,14 @@ def resample(LR_dict, essential_genes, n_resample=10000):
             random_gene=random.choice(list(noness_LRdict))
             random_LRs.append(LR_dict[random_gene])
         random_median=median(random_LRs)
+        random_medians.append(random_median)
         if random_median>my_median:
             greater_medians+=1
 
     rv=greater_medians/float(n_resample)
     print('rv: '+str(rv))
     print('n_resample: '+str(n_resample))
+    print('median random median: ' +str(median(random_medians))+', goi median: '+str(my_median))
         
     
     
