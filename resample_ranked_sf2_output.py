@@ -150,7 +150,7 @@ def resample(LR_dict, essential_genes, n_resample=10000):
             random_LRs.append(LR_dict[random_gene])
         random_median=median(random_LRs)
         random_medians.append(random_median)
-        if random_median>my_median:
+        if random_median>=my_median:
             greater_medians+=1
 
     rv=greater_medians/float(n_resample)

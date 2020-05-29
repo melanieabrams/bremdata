@@ -9,7 +9,8 @@ merged_6AfricanBeer_chromosome1.sf2
 
 '''
 #Parameters
-gff='/usr2/people/mabrams/Amended_Genomes/D1373/DBVPG1373.gff'
+#gff='/usr2/people/mabrams/Amended_Genomes/D1373/DBVPG1373.gff'
+gff='/usr2/people/mabrams/Amended_Genomes/S288C/saccharomyces_cerevisiae_R64-1-1_20110208.gff'
 
 
 filenames = sys.argv[1:]
@@ -77,14 +78,14 @@ def rankGenes(ann_dict, chrom_dict):
             for i in range(len(pos_list)):
                 if start<pos_list[i]<stop:
                     LRs.append(LR_list[i])
-                    gene_LR=np.mean(LRs)
-                    gene_LRs.append(gene_LR)
+            gene_LR=np.mean(LRs)
+            gene_LRs.append(gene_LR)
             sf2_dict[gene]=[gene_LR, chrom, start, stop]
 
     #print(sf2_dict['YAL054C'])
 
     with open(outfileName, 'w') as wf:
-        wf.writelines('gene\taverageSF2\n')
+        wf.writelines('gene\taverageSF2\tchrom\tstart\tstop\n')
         for k in sorted(sf2_dict, key=sf2_dict.get, reverse=True):
             #print(gene)
             gene=k

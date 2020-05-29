@@ -9,12 +9,14 @@ resample ranked h12 H2/H1 ratios by gene (accounting for essentiality)
 #Parameters
 #gff='/usr2/people/mabrams/Amended_Genomes/Z1/Z1.gff'
 #gff='Z1.gff'
-gff='/usr2/people/mabrams/Amended_Genomes/D1373/DBVPG1373.gff'
+#gff='/usr2/people/mabrams/Amended_Genomes/D1373/DBVPG1373.gff'
 #gff='DBVPG1373.gff'
+gff='/usr2/people/mabrams/Amended_Genomes/S288C/saccharomyces_cerevisiae_R64-1-1_20110208_withoutFasta.gff'
+
 essential_genes='/usr2/people/mabrams/Amended_Genomes/essential.csv'
 
 goi=['YLR397C','YGR098C', 'YMR168C','YKR054C','YDR180W',
-     'YHR023W','YGR198W','YHR166C','YCR042C','YPL174C']
+     'YHR023W','YCR042C','YNL172W']
 
 ###
 ranked_genes_h12 = sys.argv[1]
@@ -24,27 +26,27 @@ def ParseFromGFF(gfffile):
     '''
     Parses SGD features flat file
     Input: SGD_features.tab file
-    Output: dict of {gene:[chrom,start,stop]}}
+    Output: dict of {chrom:{gene:[start,stop]}}
     '''
-
     gff_genes=[]
     
     f = open(gfffile)
     lines=[]
     for line in f:
-        row_data=line.split("\t")
-        chrom=row_data[0]
-        start=int(row_data[3])
-        stop=int(row_data[4])
-        info=row_data[8].split(";")
-        yName=info[0].split('=')[1]
-        if yName[0]=='Y':
-            gff_genes.append(yName)
-            #ann_dict[yName]=[chrom,start,stop]
-                
+        if line[0]!='#': #skip header rows
+            row_data=line.split('\t')
+            chrom=row_data[0]
+            start=int(row_data[3])
+            stop=int(row_data[4])
+            info=row_data[8].split(";")
+            yName=info[0].split('=')[1]
+            #print(yName)
+            if yName[0]=='Y' and len(yName)>5:
+                gff_genes.append(yName)
     f.close()
     
     return gff_genes
+
 
 def ParseEssential(essentialfile):
     '''
@@ -82,7 +84,7 @@ def test_goi_in_gff(goi):
 def ParseRankedGenes(ranked_genes_h12):
     '''
     Input: ranked h12 file
-    Output: dictionary of gene:H2H1
+    Output: dictionary of gene:H12
     '''
 
     ranked_dict={}      
@@ -96,11 +98,11 @@ def ParseRankedGenes(ranked_genes_h12):
             gene=row_data[0]
             H12=float(row_data[1])
             H2H1=float(row_data[2])
-            ranked_dict[gene]=H2H1
+            ranked_dict[gene]=H12
     f.close()
 
     for gene in goi:
-        print("H2H1 of "+gene+": "+str(ranked_dict[gene]))
+        print("H12 of "+gene+": "+str(ranked_dict[gene]))
 
 ##    print(ranked_dict)
 ##    print(ranked_dict['YLR397C'])
@@ -108,32 +110,32 @@ def ParseRankedGenes(ranked_genes_h12):
     return ranked_dict
 
 
-def resample(H2H1_dict, essential_genes, n_resample=10000):
+def resample(H12_dict, essential_genes, n_resample=10000):
     '''resamples same num essential and nonessential genes'''
 
-    #get goi H2H1s and see if they're essential
-    goi_H2H1s=[]
+    #get goi H12s and see if they're essential
+    goi_H12s=[]
     num_essential_goi=0
     for gene in goi:
-        goi_H2H1s.append(H2H1_dict[gene])
+        goi_H12s.append(H12_dict[gene])
         if gene in essential_genes:
             num_essential_goi+=1
-    num_goi=len(goi_H2H1s)
+    num_goi=len(goi_H12s)
     num_nonessential_goi=num_goi-num_essential_goi
 
     print('number essential goi : '+str(num_essential_goi))
     print('number nonessential goi: '+str(num_nonessential_goi))
         
-    my_median=median(goi_H2H1s)
+    my_median=median(goi_H12s)
 
-    #split all tested H2H1s into essential and nonessential
-    ess_H2H1dict={}
-    noness_H2H1dict={}
-    for gene in H2H1_dict:
+    #split all tested H12 into essential and nonessential
+    ess_H12dict={}
+    noness_H12dict={}
+    for gene in H12_dict:
         if gene in essential_genes:
-            ess_H2H1dict[gene]=H2H1_dict[gene]
+            ess_H12dict[gene]=H12_dict[gene]
         else:
-            noness_H2H1dict[gene]=H2H1_dict[gene]
+            noness_H12dict[gene]=H12_dict[gene]
 
     
 
@@ -142,14 +144,14 @@ def resample(H2H1_dict, essential_genes, n_resample=10000):
 
     #add the correct number of essential and nonessential random genes, and then see how many random groups >median
     for i in range(n_resample):
-        random_H2H1s=[]
+        random_H12s=[]
         for n in range(num_essential_goi):
-            random_gene=random.choice(list(ess_H2H1dict))
-            random_H2H1s.append(H2H1_dict[random_gene])
+            random_gene=random.choice(list(ess_H12dict))
+            random_H12s.append(H12_dict[random_gene])
         for n in range(num_nonessential_goi):
-            random_gene=random.choice(list(noness_H2H1dict))
-            random_H2H1s.append(H2H1_dict[random_gene])
-        random_median=median(random_H2H1s)
+            random_gene=random.choice(list(noness_H12dict))
+            random_H12s.append(H12_dict[random_gene])
+        random_median=median(random_H12s)
         random_medians.append(random_median)
         if random_median>=my_median:
             greater_medians+=1
@@ -170,5 +172,5 @@ gff_genes=ParseFromGFF(gff)
 tested_goi=test_goi_in_gff(goi)
 
 essential_genes=ParseEssential(essential_genes)
-H2H1_dict=ParseRankedGenes(ranked_genes_h12)
-resample(H2H1_dict,essential_genes)
+H12_dict=ParseRankedGenes(ranked_genes_h12)
+resample(H12_dict,essential_genes)

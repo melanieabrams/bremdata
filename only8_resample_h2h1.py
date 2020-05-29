@@ -9,12 +9,14 @@ resample ranked h12 H2/H1 ratios by gene (accounting for essentiality)
 #Parameters
 #gff='/usr2/people/mabrams/Amended_Genomes/Z1/Z1.gff'
 #gff='Z1.gff'
-gff='/usr2/people/mabrams/Amended_Genomes/D1373/DBVPG1373.gff'
+#gff='/usr2/people/mabrams/Amended_Genomes/D1373/DBVPG1373.gff'
 #gff='DBVPG1373.gff'
 essential_genes='/usr2/people/mabrams/Amended_Genomes/essential.csv'
 
+gff='/usr2/people/mabrams/Amended_Genomes/S288C/saccharomyces_cerevisiae_R64-1-1_20110208_withoutFasta.gff'
+
 goi=['YLR397C','YGR098C', 'YMR168C','YKR054C','YDR180W',
-     'YHR023W','YGR198W','YHR166C','YCR042C','YPL174C']
+     'YHR023W','YCR042C','YNL172W']
 
 ###
 ranked_genes_h12 = sys.argv[1]
@@ -24,24 +26,23 @@ def ParseFromGFF(gfffile):
     '''
     Parses SGD features flat file
     Input: SGD_features.tab file
-    Output: dict of {gene:[chrom,start,stop]}}
+    Output: dict of {chrom:{gene:[start,stop]}}
     '''
-
     gff_genes=[]
     
     f = open(gfffile)
     lines=[]
     for line in f:
-        row_data=line.split("\t")
-        chrom=row_data[0]
-        start=int(row_data[3])
-        stop=int(row_data[4])
-        info=row_data[8].split(";")
-        yName=info[0].split('=')[1]
-        if yName[0]=='Y':
-            gff_genes.append(yName)
-            #ann_dict[yName]=[chrom,start,stop]
-                
+        if line[0]!='#': #skip header rows
+            row_data=line.split('\t')
+            chrom=row_data[0]
+            start=int(row_data[3])
+            stop=int(row_data[4])
+            info=row_data[8].split(";")
+            yName=info[0].split('=')[1]
+            #print(yName)
+            if yName[0]=='Y' and len(yName)>5:
+                gff_genes.append(yName)
     f.close()
     
     return gff_genes

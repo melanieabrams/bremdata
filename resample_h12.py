@@ -151,7 +151,7 @@ def resample(H12_dict, essential_genes, n_resample=10000):
             random_H12s.append(H12_dict[random_gene])
         random_median=median(random_H12s)
         random_medians.append(random_median)
-        if random_median>my_median:
+        if random_median>=my_median:
             greater_medians+=1
 
     rv=greater_medians/float(n_resample)
