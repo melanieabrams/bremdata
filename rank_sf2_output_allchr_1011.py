@@ -10,7 +10,9 @@ merged_6AfricanBeer_chromosome1.sf2
 '''
 #Parameters
 #gff='/usr2/people/mabrams/Amended_Genomes/D1373/DBVPG1373.gff'
-gff='/usr2/people/mabrams/Amended_Genomes/S288C/saccharomyces_cerevisiae_R64-1-1_20110208.gff'
+gff='/usr2/people/mabrams/Amended_Genomes/S288C/saccharomyces_cerevisiae_R64-1-1_20110208_withoutFasta.gff'
+roman_numerals_in_gff=True
+
 
 
 filenames = sys.argv[1:]
@@ -23,26 +25,38 @@ def ParseFromGFF(gfffile):
     Input: SGD_features.tab file
     Output: dict of {chrom:{gene:[start,stop]}}
     '''
-
+    roman_to_numerals={
+        'chrI':'chr01','chrII':'chr02','chrIII':'chr03','chrIV':'chr04','chrV':'chr05',
+        'chrVI':'chr06','chrVII':'chr07','chrVIII':'chr08','chrIX':'chr09','chrX':'chr10',
+        'chrXI':'chr11','chrXII':'chr12','chrXIII':'chr13','chrXIV':'chr14','chrXV':'chr15',
+        'chrXVI':'chr16','chrMito':'chrMito','2-micron':'chr2u'}
     ann_dict={}
     
     f = open(gfffile)
     lines=[]
     for line in f:
-        row_data=line.split("\t")
-        chrom=row_data[0]
-        start=int(row_data[3])
-        stop=int(row_data[4])
-        info=row_data[8].split(";")
-        yName=info[0].split('=')[1]
-        if yName[0]=='Y':
-            if chrom in ann_dict:
-                ann_dict[chrom][yName]=[start,stop]
+        if line[0]!='#': #skip header rows
+            row_data=line.split("\t")
+            #print(row_data)
+            if roman_numerals_in_gff==True: #convert roman numerals if needed
+                chrom=roman_to_numerals[row_data[0]]
             else:
-                ann_dict[chrom]={yName:[start,stop]}
+                chrom=row_data[0]
+            start=int(row_data[3])
+            stop=int(row_data[4])
+            info=row_data[8].split(";")
+            yName=info[0].split('=')[1]
+            #print(yName)
+            if yName[0]=='Y' and len(yName)>5:
+                if chrom in ann_dict:
+                    ann_dict[chrom][yName]=[start,stop]
+                else:
+                    ann_dict[chrom]={yName:[start,stop]}
     f.close()
     
     return ann_dict
+
+
 
 def ParseSF2(sf2_file):
     '''
