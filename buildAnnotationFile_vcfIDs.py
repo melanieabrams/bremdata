@@ -19,7 +19,7 @@ def main():
             for record in vcf_reader:
                 chrom=str(record.CHROM)
                 pos=str(record.POS)
-                new_ID='chr'+chrom+'_'+pos
+                new_ID=chrom+'_'+pos
                 wf.writelines(chrom+'\t'+pos+'\t'+new_ID+'\n')
                 
         
