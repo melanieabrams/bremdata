@@ -2,22 +2,28 @@ import sys
 import vcf
 import numpy as np
 
-#USAGE: python amend_s288c_with_vcfs.py vcf h12files
-#ex/ python ~/scripts/amend_s288c_with_vcfs.py ~/data/1WineEuropean_1011genomes/merged_1WineEuropean.vcf *.h12_h2h1
+###USAGE: python amend_s288c_with_vcfs.py vcf h12files###
+    #ex/ python ~/scripts/amend_s288c_with_vcfs.py ~/data/1WineEuropean_1011genomes/merged_1WineEuropean.vcf /usr2/people/mabrams/data/1WineEuropean_1011genomes/split_chrom/shs/all_samples/w1200_j25/*.h12_h2h1
 
-#PARAMETERS
-goi=['YLR397C','YGR098C', 'YMR168C','YKR054C','YDR180W',
-     'YHR023W','YGR198W','YHR166C','YCR042C','YPL174C']
+    #ex/ python ~/scripts/amend_s288c_with_vcfs.py ~/data/1WineEuropean_1011genomes/split_chrom/merged_1WineEuropean_chromosome1.vcf /usr2/people/mabrams/data/1WineEuropean_1011genomes/split_chrom/shs/all_samples/w1200_j25/*.h12_h2h1
 
-#goi=['YGR098C']
+
+
+###PARAMETERS###
+
+window_extension=3000 #number of bp to pull from upstream and downstream of the ORFs
 
 reference_genome='/usr2/people/mabrams/Amended_Genomes/S288C/S288C_reference_genome_R64-1-1_20110203/S288C_reference_sequence_R64-1-1_20110203.fsa'
 
 gff='/usr2/people/mabrams/Amended_Genomes/S288C/saccharomyces_cerevisiae_R64-1-1_20110208_withoutFasta.gff'
 roman_numerals_in_gff=True
 
+###FUNCTIONS###
+
 def parseRefGenome(reference_genome):
-    '''return dictionary {chrom:string},stripping newline characters'''
+    ''' Parses the reference genome
+        Input: fasta formatted genome
+        Output: dictionary {chrom:string},stripping newline characters'''
     
     roman_to_numerals={
         'I':'chr01','II':'chr02','III':'chr03','IV':'chr04','V':'chr05',
@@ -85,132 +91,46 @@ def ParseFromGFF(gfffile):
     
     return ann_dict
 
-def ParseH12(h12_file):
-    '''
-    Input: outfile from selscan
-    Output: a dictionary of winodws tested, in the form {center: right, left}
-    '''
-    pos_dict={}
-
-    #add position and values for each base to a dictionary for that chromosome
-    f = open(h12_file)
-    next(f)
-    for line in f:
-        row_data = line.strip().split("\t")
-        center_coord=int(row_data[0])
-        left_coord=int(row_data[1])
-        right_coord=int(row_data[2])
-        G1=float(row_data[6])
-        pos_dict[center_coord]=[left_coord, right_coord,G1]
-        
-        #columns:
-            #1ctrcoord (index 0)
-            #2leftcoord
-            #3rightcoord
-            #4K
-            #55hapfreqspec
-            #6strainnum
-            #7H1 (index 6)
-            #8H2 (index 7)
-            #9H12 (index 8)
-            #10H2/H1 (index 9)
-            #11H123 (index 10)
- 
-    f.close()
-
-    return pos_dict 
-
-
-def getStartStop(ann_dict, chrom_dict):
-    '''get start and stop for the G12 window around each gene, as measured by ranking script'''
-    outfileName=save_prefix+'_gene_windows.txt'
-    G1_dict={}
-    gene_G1s=[]
-    for chrom in ann_dict:
-        pos_dict=chrom_dict[chrom] # centers of windows for G1
-        for gene in ann_dict[chrom]:
-            G1s=[]
-            coords=[]
-            start=ann_dict[chrom][gene][0] #annotated gene start
-            stop=ann_dict[chrom][gene][1] #annotated gene stop
-            for pos in pos_dict:
-                if start<pos<stop:
-##                    if gene=="YAL056W":
-##                        print(gene)
-##                        print("H12 list")
-##                        print(H12_list[i])
-##                        print("H2/H1 ratios")
-##                        print(ratio_H2H1_list[i])
-                    coords+=pos_dict[pos][:-1] #add the right and left coordinate to t
-                    G1s.append(pos_dict[pos][-1])
-                    
-
-            if len(G1s)>0:
-                gene_G1=np.mean(G1s)
-                gene_G1s.append(gene_G1)
-                window_start=min(coords)
-                window_stop=max(coords)
-                G1_dict[gene]=[gene_G1, chrom, start, stop, window_start, window_stop]
-
-
-    with open(outfileName, 'w') as wf:
-        wf.writelines('gene\taverageG1\tchrom\tstart\tstop\twindow_start\twindow_stop\n')
-        for k in sorted(G1_dict, key=G1_dict.get, reverse=True):
-            #print(gene)
-            gene=k
-            avgG1=str(G1_dict[gene][0])
-            chrom=str(G1_dict[gene][1])
-            start=str(G1_dict[gene][2])
-            stop=str(G1_dict[gene][3])
-            window_start=str(G1_dict[gene][4])
-            window_stop=str(G1_dict[gene][5])
-            wf.writelines(gene+'\t'+avgG1+'\t'+chrom+'\t'+start+'\t'+stop+'\t'+window_start+'\t'+window_stop+'\n')
-            
-    return G1_dict
-
-def helper_parseVCF(coord_dict):
+def helper_parseVCF(ann_dict):
     '''return location dicts to help vcf parser look only at loc of interest: {chrom: [[window_start_1,stop_1][w_s_2,stop_2]]}
-       and list of chromosomes formatted like goi'''
+       and list of chromosomes formatted like vcf'''
     #dict of windows of interest
     loc_dict={}
-    for gene in goi:
-        chrom=coord_dict[gene][1]
-        chrnum=int(chrom[3:])
-        chrom='chromosome'+str(chrnum) #formatted like vcf
-        
-        window_start=coord_dict[gene][4]
-        window_stop=coord_dict[gene][5]
+    for chrom in ann_dict:
+        vcf_chr='chromosome'+str(int(chrom[3:])) #get chrom formatted like vcf
+        for gene in ann_dict[chrom]:
 
-        start_index=window_start-1 # correcting for 0-1 indexing and exclusive slices
-        stop_index=window_stop
-        
-        if chrom in loc_dict:
-            loc_dict[chrom].append([start_index,stop_index,gene])
-        else:
-            loc_dict[chrom]=[[start_index,stop_index,gene]]
+            orf_start=ann_dict[chrom][gene][0] #orfs from annotation file
+            orf_stop=ann_dict[chrom][gene][1]
+
+            window_start=orf_start-window_extension #extend the window with the extension set in the PARAMETERs
+            window_stop=orf_stop+window_extension
+
+            start_index=window_start-1 # correcting for 0-1 indexing and exclusive slices
+            stop_index=window_stop
+            
+            if vcf_chr in loc_dict:
+                loc_dict[vcf_chr].append([start_index,stop_index,gene])
+            else:
+                loc_dict[vcf_chr]=[[start_index,stop_index,gene]]
 
 
 
     return loc_dict
 
-def parseVCF(vcf_file,coord_dict):
+def parseVCF(vcf_file,ann_dict):
     '''return nested dictionary {gene:{pos:[alleles]}}}'''
 
-##    if True: #for debugging
-##        return {'YGR098C': {'AAA': {687458: ['G', 'T']}}}
-
-
-    #helper
-
+    #build loc_dict with helper function
     
-    loc_dict=helper_parseVCF(coord_dict)
-    #print(loc_dict)
+    loc_dict=helper_parseVCF(ann_dict)
 
-    #now    
+    #now go through vcf to sort variant calls by sample and gene
     
     vcf_dict={}
-    for gene in goi:
-        vcf_dict[gene]={}
+    for chrom in ann_dict:
+        for gene in ann_dict[chrom]:
+            vcf_dict[gene]={}
 
     vcf_reader = vcf.Reader(open(vcf_file, 'r'))
     for record in vcf_reader:
@@ -238,8 +158,7 @@ def parseVCF(vcf_file,coord_dict):
                                 vcf_dict[gene][sample][pos]=alleles
                             else:
                                 vcf_dict[gene][sample]={pos:alleles}
-                                #print(vcf_dict)
-                                #return vcf_dict #for troubleshooting
+                               
         else:
             print(chrom)
 
@@ -256,15 +175,17 @@ def parseVCF(vcf_file,coord_dict):
 
 
 
-def amendGenes(gene, reference_dict, coord_dict,vcf_dict):
+def amendGenes(gene, chrom, reference_dict, ann_dict, vcf_dict):
     '''output: {strain:seq} dict for a geoi'''
 
     strain_seqs={}
 
     #get window start and stop for gene
-    chrom=coord_dict[gene][1]
-    window_start=coord_dict[gene][4]
-    window_stop=coord_dict[gene][5]
+    orf_start=ann_dict[chrom][gene][0] #orfs from annotation file
+    orf_stop=ann_dict[chrom][gene][1]
+
+    window_start=orf_start-window_extension #extend the window with the extension set in the PARAMETERs
+    window_stop=orf_stop+window_extension
     
     #get S288C sequence for that window
     start_index=window_start -1 
@@ -292,8 +213,9 @@ def amendGenes(gene, reference_dict, coord_dict,vcf_dict):
 
 
 def writeFasta(gene, amended_seqs, ref_seq):
+    '''writes the amended gene into fasta format'''
     outfile=gene+'_amended.fa'
-    n=80
+    n=80 #number of characters per line in output
     
     with open(outfile,'w') as wf:
         #write ref seq at the top
@@ -325,33 +247,16 @@ print('parsing reference genome...')
 reference_dict=parseRefGenome(reference_genome)
 
 
-#build chrom dict
-print('parsing selscan outfiles...')
-chrom_dict={}
-for h12file in h12files:
-    #get pos and vals
-    pos_dict=ParseH12(h12file)
-    #get chromosome names
-    prefix=h12file.split('.')[0]
-    chrom=prefix.split('chromosome')[1]
-    if len(chrom)==1:
-        chrom='chr0'+chrom
-    else:
-        chrom='chr'+chrom
-    chrom_dict[chrom]=pos_dict
-
-#get start and stop (and write outfile) of genes and their g1 windows
-print('determining gene windows...')
-coord_dict=getStartStop(ann_dict, chrom_dict) #spot checked for ESP1 (YGR098C), value corresponds to h12_h2h1 outfile
-
 #get gene vars
 
-print('loading variants in goi from vcf...')
-vcf_dict=parseVCF(vcf_file, coord_dict)
+print('loading variants from vcf...')
+vcf_dict=parseVCF(vcf_file, ann_dict)
 
 #amend gene
 print('amending genes...')
-for gene in goi:
-    amended_seqs, ref_seq=amendGenes(gene, reference_dict, coord_dict, vcf_dict)
-    writeFasta(gene, amended_seqs, ref_seq)
+for chrom in ann_dict:
+    print('...from '+chrom)
+    for gene in ann_dict[chrom]:
+        amended_seqs, ref_seq=amendGenes(gene, chrom, reference_dict, ann_dict, vcf_dict)
+        writeFasta(gene, amended_seqs, ref_seq)
     
