@@ -65,6 +65,7 @@ if __name__ == '__main__':
 		# pandas magic to combine the files and make it look pretty
 		concatd_df = pd.concat(list_of_dfs) # merges dataframes from same biorep
 		idx_concat_df = concatd_df.set_index('tech_rep_name', drop=False)
+		idx_concat_df.index.name = None #added this line for py2.7 from 2.6
 		grouped = idx_concat_df.groupby('tech_rep_name', sort=False).apply(make_and_populate_new_columns).fillna(value=0.0)
 		grouped.drop(['n', 'normalized_read', 'tech_rep_name', 'total_mapped_reads'], axis=1, inplace=True)
 		id_idx_grouped = grouped.set_index('ID', drop=False)
