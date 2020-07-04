@@ -15,7 +15,7 @@ import re
 # for all inserts within a given allele, calculate the mean of all the log2(39/28) for each insert, "mean39_28"
 
 number_inserts_per_allele_needed_to_test = 2.0
-cutoff_gene_cv_ratio = 5.0 #coefficient of variation of the ratio of 39/28 for an insert
+cutoff_gene_cv_ratio = 20.0 #coefficient of variation of the ratio of 39/28 for an insert
 
 def parse_file(filename, sep='\t'): 
 	df = pd.read_csv(filename, sep=sep)
@@ -70,6 +70,7 @@ if __name__ == '__main__':
 		each_df['gene'] = each_df['gene'].map(lambda x: x[2:])
 		each_df['allele'] = each_df.loc[:, 'annotation'].copy()
 		each_df['allele'] = each_df['allele'].map(lambda x: x[0:2])
+		each_df.index.name = None #added this line for py2.7 from 2.6
 		grouped = each_df.groupby('annotation', sort=False).apply(calc_mean_insert_ratios)
 		grouped = each_df.groupby('annotation', sort=False).apply(calc_stdev_insert_ratios)
 		grouped.set_index('gene', inplace=True, drop=False)

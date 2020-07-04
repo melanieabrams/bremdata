@@ -14,7 +14,7 @@ import sys
 # also saves a file before filtering with all the coding inserts "all_data.unfiltered_inserts_coding"
 # if you want to try multiple filtering schemes, this is the point where you will have to run through the rest of the analysis separately for every separate filtered file
 
-coeff_var_cutoff = 1.5 # cutoff for coefficient of variation
+coeff_var_cutoff = 1.5 #cutoff for coefficient of variation
 norm_reads_cutoff = 1.1 # cutoff for normalized read count
 filter_strategy = 'both' # can be 'coeff' or 'reads' or 'both'
 
@@ -73,6 +73,7 @@ if __name__ == '__main__':
 	concatd_df.drop(drop_columns, axis=1, inplace=True)
 	concatd_df.condition = concatd_df.condition.astype(str)
 	concatd_df.set_index('condition', inplace=True, drop=False)
+	concatd_df.index.name = None #added this line for py2.7 from 2.6
 	grouped2 = concatd_df.groupby('condition', sort=False).apply(make_and_populate_new_columns)
 	grouped2.set_index('ID', inplace=True, drop=False)
 	grouped2.drop(['br_averaged_reads', 'br_coeffvar', 'condition'], axis=1, inplace=True)
@@ -87,18 +88,18 @@ if __name__ == '__main__':
 	if filter_strategy == 'coeff':
 		columns_to_filter_by = [col for col in columns if 'br_coeffvar' in col] # filter by either of the "conditions" coeffvar
 		# if br coeffvar of 39 or 28 is lower than or equal to cutoff, keep
-		filtered = group3[(group3[columns_to_filter_by[0]] <= coeff_var_cutoff) | (group3[columns_to_filter_by[1]] <= coeff_var_cutoff)]
+		filtered = group3[(np.absolute(group3[columns_to_filter_by[0]]) <= coeff_var_cutoff) | (np.absolute(group3[columns_to_filter_by[1]]) <= coeff_var_cutoff)] ##changed this to ABSOLUTE VAL
 		#will ignore NaN, it won't count either way and will never evaluate true
-		print len(group3), 'before filtering'
-		print len(filtered), 'after filtering'
+		print len(group3), 'before filtering coeff'
+		print len(filtered), 'after filtering coeff'
 		filtered.to_csv(str(output_folder)+str('/')+str(coeff_var_cutoff)+'_coeffvarcutoff.filtered_inserts', sep='\t', index=False)
 
 	if filter_strategy == 'reads':
 		columns_to_filter_by = [col for col in columns if 'br_averaged_reads' in col]
 		# if norm averaged reads in 39 or 28 is higher than or equal to read cutoff, keep
 		filtered = group3[(group3[columns_to_filter_by[0]] >= norm_reads_cutoff) | (group3[columns_to_filter_by[1]] >= norm_reads_cutoff)]
-		print len(group3), 'before filtering'
-		print len(filtered), 'after filtering'
+		print len(group3), 'before filtering reads'
+		print len(filtered), 'after filtering reads'
 		filtered.to_csv(str(output_folder)+str('/')+str(norm_reads_cutoff)+'_readscutoff.filtered_inserts', sep='\t', index=False)
 
 	if filter_strategy == 'both':
@@ -109,4 +110,4 @@ if __name__ == '__main__':
 		print len(group3), 'before filtering'
 		print len(filtered), 'after filtering for coeffvar'
 		print len(filtered2), 'after filtering for coeffvar and read count'
-		filtered2.to_csv(str(output_folder)+str('/')+str(coeff_var_cutoff)+'_'+str(norm_reads_cutoff)+'_coeffvarANDreadcutoff.filtered_inserts', sep='\t', index=False)
+		filtered2.to_csv(str(output_folder)+str('/')+str(coeff_var_cutoff)+'_'+str(norm_reads_cutoff)+'_coeffvarANDreadcutoff_uncollapsedMBA.filtered_inserts', sep='\t', index=False)

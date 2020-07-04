@@ -29,30 +29,37 @@
 
 
 ##manually v'd library names to temp/br name (28A1.fq_clean etc), 28 and 39 even though 28 and 37, reran 2-4
+##NOTE: Discovered that step 2-3 introduces a bug (naming reps like 280.0 not 28E1) if the tech rep is E.  make them H instead.
 
 
 ###2
-#/usr2/people/scorad/anaconda2/bin/python ~/carlygithub/rh-seq/2total_reads_and_normalize.py ./ ./*.fq_clean
+#~/bin/anaconda2/bin/python ~/carlygithub/rh-seq/2total_reads_and_normalize.py ./ ./*.fq_clean
+
 ###3
-#/usr2/people/scorad/anaconda2/bin/python ~/carlygithub/rh-seq/3remove_NC_and_plasmid_inserts.py ./ ./*.normalized_pooled_reads
+#~/bin/anaconda2/bin/python ~/carlygithub/rh-seq/3remove_NC_and_plasmid_inserts.py ./ ./*.normalized_pooled_reads
+
 
 ###4
-#mv'd 380 and 280 to a foolder then
+# ~/bin/anaconda2/bin/python ~/scripts/4one_tr.py ./ ./*.normalized_pooled_reads_coding
 
-# /usr2/people/scorad/anaconda2/bin/python ~/scripts/4one_tr.py ./ ./*.normalized_pooled_reads_coding
+
 
 
 
 
 ###5
-##/usr2/people/scorad/anaconda2/bin/python ~/carlygithub/rh-seq/5combine_bio_reps.py ./ *.normalized_averaged_techreps
+##(had to modify this because py2.6 to 7)~/bin/anaconda2/bin/python ~/carlygithub/rh-seq/5combine_bio_reps.py ./ *.normalized_averaged_techreps
+## modified the groupby statements in all further scripts
+# ~/bin/anaconda2/bin/python ~/scripts/5combine_bio_reps_MBA.py ./ *.normalized_averaged_techreps
 
 
 ###6-8 collapsed br
 
-##/usr2/people/scorad/anaconda2/bin/python ~/scripts/6filter_inserts_uncollapsedMBA.py ./ *.normalized_averaged_bioreps
-##/usr2/people/scorad/anaconda2/bin/python ~/scripts/7fitness_ratios_uncollapsedMBA.py ./ *.filtered_inserts
-##/usr2/people/scorad/anaconda2/bin/python ~/scripts/8organize_and_filter_genes_ratiocv_uncollapsedMBA.py ./ 1.5_1.1_coeffvarANDreadcutoff_uncollapsedMBA.insert_ratios
+##~/bin/anaconda2/bin/python ~/scripts/6filter_inserts_uncollapsedMBA.py ./ *.normalized_averaged_bioreps
+##also ran a version of 6 with coevar 2.0 instead of 1.5
+
+##~/bin/anaconda2/bin/python ~/scripts/7fitness_ratios_uncollapsedMBA.py ./ *.filtered_inserts
+##~/bin/anaconda2/bin/python ~/scripts/8organize_and_filter_genes_ratiocv_uncollapsedMBA.py ./ 1.5_1.1_coeffvarANDreadcutoff_uncollapsedMBA.insert_ratios
 ##with 
 ##number_inserts_per_allele_needed_to_test =2.0
 ##cutoff_gene_cv_ratio = 20.0 #coefficient of variation of the ratio of 39/28 for an insert
