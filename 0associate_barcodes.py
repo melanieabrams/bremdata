@@ -6,7 +6,8 @@ import copy
 import pandas as pd
 
 
-# PARAMETERS #    #Version 7-11-19 MBA, modified from CW's map_and_pool_BLAT.py
+# PARAMETERS #    #Version 7-27-20 MBA
+reverse_complement=True #set to True if barseq reads are the reverse complement of the NGS that goes into the TN-Seq mapping.
 
 # HELP #
 
@@ -23,6 +24,13 @@ out_dir = sys.argv[3]
 
 
 # BEGIN FUNCTIONS #     
+
+def getReverseComplement(bc):
+    reverse_dict={'A':'T','T':'A','G':'C','C':'G'}
+    revcomp_bc=""
+    for base in bc:
+        revcomp_bc=reverse_dict[base]+revcomp_bc
+    return revcomp_bc
 
 def parse_file(ini_tnseq_file, sep = '\t'):
     '''reads initial tnseq file as pd dataframe'''
@@ -71,6 +79,9 @@ def Filter_Reads(fastq_file):  ## filter out reads that do not have the universa
                 continue  #skips the read if it doesn't have a bc pattern
 
             barcode = read[fl_match_data.end():fr_match_data.start()]
+
+            if reverse_complement==True: #added this 7/27/20 to account for NGS of TnSeq and BarSeq getting different strands
+                barcode=getReverseComplement(barcode) 
             
             #calculate stats
             total_bases+=len(read)
@@ -120,4 +131,3 @@ def assoc_with_barcode(ini_tnseq_file, bardict):
 bardict = Filter_Reads(read_file)  ## filters out reads that don't have tn sequence, writes the genomic portion of the remaining reads to a new file
 
 assoc_with_barcode(ini_tnseq_file, bardict)
-
