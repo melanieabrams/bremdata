@@ -6,7 +6,8 @@ import copy
 import pandas as pd
 
 
-# PARAMETERS #    #Version 7-27-20 MBA
+# PARAMETERS #    #7-28-20 JC modified from--Version 7-27-20 MBA 
+# switched the flanking patterns and truncated the right flanking U1 pattern 
 reverse_complement=True #set to True if barseq reads are the reverse complement of the NGS that goes into the TN-Seq mapping.
 
 # HELP #
@@ -26,7 +27,7 @@ out_dir = sys.argv[3]
 # BEGIN FUNCTIONS #     
 
 def getReverseComplement(bc):
-    reverse_dict={'A':'T','T':'A','G':'C','C':'G'}
+    reverse_dict={'A':'T','T':'A','G':'C','C':'G','N':'N'}
     revcomp_bc=""
     for base in bc:
         revcomp_bc=reverse_dict[base]+revcomp_bc
@@ -43,10 +44,19 @@ def Filter_Reads(fastq_file):  ## filter out reads that do not have the universa
 
     wf = open(out_dir+fastq_filename+'_barcoded_reads','w')  # outfile for the trucated reads that will be mapped
 
+
     #organization: ....flanking_left-->barcode-->flanking_right
      
-    flanking_left_pattern = regex.compile('(?e)(GATGTCCACGAGGTCTCT){e<=2}')  # Universal primer 1.  searches for this pattern allowing 2 mismatchs for sequencing errors
-    flanking_right_pattern = regex.compile('(?e)(CGTACGCTGCAGGTCGAC){e<=2}')  # Universal primer 2.  searches for this pattern allowing 2 mismatchs for sequencing errors
+    
+    if reverse_complement==True:
+        flanking_left_pattern = regex.compile('(?e)(GTCGACCTGCAGCGTACG){e<=2}')  # Universal primer 2.  searches for this pattern allowing 2 mismatchs for sequencing errors
+        flanking_right_pattern = regex.compile('(?e)(AGAGAC){e<=0}')  # Universal primer 1 truncated because SR50 length.  searches for this pattern allowing 0 mismatchs for sequencing errors
+
+    else:
+        flanking_left_pattern = regex.compile('(?e)(GATGTCCACGAGGTCTCT){e<=2}')  # Universal primer 1.  searches for this #pattern allowing 2 mismatchs for sequencing errors
+        flanking_right_pattern = regex.compile('(?e)(CGTACGCTGCAGGTCGAC){e<=2}')  # Universal primer 2.  searches for this #pattern allowing 2 mismatchs for sequencing errors
+
+
     # counts for summary stats #
 
     tot_reads = 0.0  
@@ -78,10 +88,16 @@ def Filter_Reads(fastq_file):  ## filter out reads that do not have the universa
             if fr_match_data == None:
                 continue  #skips the read if it doesn't have a bc pattern
 
-            barcode = read[fl_match_data.end():fr_match_data.start()]
 
+            barcode=read[fl_match_data.end():fr_match_data.start()]
             if reverse_complement==True: #added this 7/27/20 to account for NGS of TnSeq and BarSeq getting different strands
-                barcode=getReverseComplement(barcode) 
+                barcode=getReverseComplement(barcode)
+               
+
+            else:
+                barcode = read[fl_match_data.end():fr_match_data.start()]
+                
+                            
             
             #calculate stats
             total_bases+=len(read)
@@ -124,6 +140,7 @@ def assoc_with_barcode(ini_tnseq_file, bardict):
         count = bardict[row_barcode]
         assoc_df.at[index,'n'] = count #associate the metadata for that insert with the count from barseq
     assoc_df.to_csv(str(out_dir)+str('/')+str(fastq_filename)+'.barseq_pooled_reads', sep = '\t', index = False) #save as a new file in .fastq_pooled_reads format  
+
     return assoc_df
         
 #### START PROGRAM ####
