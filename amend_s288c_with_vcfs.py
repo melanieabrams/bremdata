@@ -5,7 +5,7 @@ import numpy as np
 ###USAGE: python amend_s288c_with_vcfs.py vcf h12files###
     #ex/ python ~/scripts/amend_s288c_with_vcfs.py ~/data/1WineEuropean_1011genomes/merged_1WineEuropean.vcf /usr2/people/mabrams/data/1WineEuropean_1011genomes/split_chrom/shs/all_samples/w1200_j25/*.h12_h2h1
 
-    #ex/ python ~/scripts/amend_s288c_with_vcfs.py ~/data/1WineEuropean_1011genomes/split_chrom/merged_1WineEuropean_chromosome1.vcf /usr2/people/mabrams/data/1WineEuropean_1011genomes/split_chrom/shs/all_samples/w1200_j25/*.h12_h2h1
+    #ex/ with one chrom: python ~/scripts/amend_s288c_with_vcfs.py ~/data/1WineEuropean_1011genomes/split_chrom/merged_1WineEuropean_chromosome1.vcf /usr2/people/mabrams/data/1WineEuropean_1011genomes/split_chrom/shs/all_samples/w1200_j25/*.h12_h2h1
 
 
 
