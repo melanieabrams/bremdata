@@ -55,8 +55,9 @@
 
 ###6-8 collapsed br
 
-##~/bin/anaconda2/bin/python ~/scripts/6filter_inserts_uncollapsedMBA.py ./ *.normalized_averaged_bioreps
+#~/bin/anaconda2/bin/python ~/scripts/6filter_inserts_uncollapsedMBA.py ./ *.normalized_averaged_bioreps
 ##also ran a version of 6 with coevar 2.0 instead of 1.5
+#~/bin/anaconda2/bin/python ~/scripts/6filter_inserts_uncollapsedMBA_newsettings.py ./ *.normalized_averaged_bioreps
 
 ##~/bin/anaconda2/bin/python ~/scripts/7fitness_ratios_uncollapsedMBA.py ./ *.filtered_inserts
 ##~/bin/anaconda2/bin/python ~/scripts/8organize_and_filter_genes_ratiocv_uncollapsedMBA.py ./ 1.5_1.1_coeffvarANDreadcutoff_uncollapsedMBA.insert_ratios
@@ -64,8 +65,16 @@
 ##number_inserts_per_allele_needed_to_test =2.0
 ##cutoff_gene_cv_ratio = 20.0 #coefficient of variation of the ratio of 39/28 for an insert
 ##
-##
+##with
+
 
 ##9
 #python /usr2/people/mabrams/scripts/9mann_whitney_u_uncollapsedMBA_py3_testgene.py ./ 1.5_1.1_coeffvarANDreadcutoff_uncollapsedMBA_ratiocvfilt_20.0_2.0.filtered_gene_inserts
 
+##uncollapsed
+#~/bin/anaconda2/bin/python ~/carlygithub/rh-seq/5combine_bio_reps.py ./ *.normalized_averaged_techreps
+#~/bin/anaconda2/bin/python ~/carlygithub/rh-seq/6filter_inserts_bug_fixed_by_AF_py2pt7.py  ./ *.normalized_averaged_bioreps
+#~/bin/anaconda2/bin/python ~/carlygithub/rh-seq/7fitness_ratios.py  ./ *.filtered_inserts
+#~/bin/anaconda2/bin/python ~/carlygithub/rh-seq/8organize_and_filter_genes_py2pt7.py  ./ 1.5_1.1_coeffvarANDreadcutoff.insert_ratios 
+
+#python ~/carlygithub/rh-seq/9mann_whitney_u_py3.py ./ 1.5_1.1_coeffvarANDreadcutoff_5.0.filtered_gene_inserts
