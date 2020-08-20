@@ -13,7 +13,9 @@ import string
 ##PARAMETERS##
 gff='/usr2/people/mabrams/carlygithub/rh-seq/YS2+CBS433+plasmid_clean'
 control_temp='28C' #assumes temp in name, e.g. 'Biorep1_28C_66'
-test_temp='4C'
+#test_temp='4C'
+#test_temp='39C'
+test_temp='37C'
 
 ##FUNCTIONS##
 def parse_gff(gff):
@@ -57,10 +59,13 @@ def add_rel_loc(df,gff_dict):
         pos=df.at[i,'location']
         gene=df.at[i,'annotation']
         chrom=df.at[i,'scaffold']
-        if df.at[i,'strand']== '+':
-            relative_insertion_site = pos - gff_dict[chrom][gene][0]
+        if gene=='NC':
+            relative_insertion_site=1 #placeholder
         else:
-            relative_insertion_site = gff_dict[chrom][gene][1] - pos
+            if df.at[i,'strand']== '+':
+                relative_insertion_site = pos - gff_dict[chrom][gene][0]
+            else:
+                relative_insertion_site = gff_dict[chrom][gene][1] - pos
         df.at[i,'rel_loc']=int(relative_insertion_site)
 
     save_name=output_folder+'/'+poolcount_file.split('.')[0]+"_with-rel_loc."+poolcount_file.split('.')[1]
@@ -75,6 +80,7 @@ def build_rename_dict(df):
     control_brs=[]
     test_brs=[]
     t0_brs=[]
+    other_brs=[]
 
     for col in df.columns:
         if 'Biorep' in col:
@@ -86,6 +92,7 @@ def build_rename_dict(df):
 
             else:
                 print('could not assign control or test temperature to column'+str(col))
+                other_brs.append(col)
         elif 'T0_' in col:
             t0_brs.append(col)
                 
@@ -105,6 +112,8 @@ def build_rename_dict(df):
         rename_dict[test_brs[i]]='39'+alphabet[i]+'1.fastq_pooled_reads_clean'
     for i in range(len(t0_brs)):
         rename_dict[t0_brs[i]]=t0_brs[i]+'.fastq_pooled_reads_clean'
+    for i in range(len(other_brs)):
+        rename_dict[other_brs[i]]='no outfile'
 
     print(rename_dict)
     
@@ -113,24 +122,25 @@ def build_rename_dict(df):
 def split_br(df, rename_dict):
     '''splits out the data into bioreps according to the new filenames for downstream processing'''
     for br in rename_dict:
-        other_brs=list(rename_dict.keys()) #get other brs
-        #print('all_outfiles')
-        #print(other_brs)
-        print('making file for br:')
-        print(br)
-        #print('all outfiles remove br')
-        other_brs.remove(br)
-        #print(other_brs)
+        if rename_dict[br]!='no outfile':
+            other_brs=list(rename_dict.keys()) #get other brs
+            #print('all_outfiles')
+            #print(other_brs)
+            print('making file for br:')
+            print(br)
+            #print('all outfiles remove br')
+            other_brs.remove(br)
+            #print(other_brs)
 
-        br_df=df.copy() #drop other from a copy of df
-        for other_br in other_brs: 
-            br_df.drop(other_br, 1, inplace=True)
+            br_df=df.copy() #drop other from a copy of df
+            for other_br in other_brs: 
+                br_df.drop(other_br, 1, inplace=True)
 
-        br_df.rename(columns = {br:'n'}, inplace = True) 
-   
-        br_rename=rename_dict[br]
-        br_df.to_csv(br_rename, sep='\t', index=False)
-        
+            br_df.rename(columns = {br:'n'}, inplace = True) 
+       
+            br_rename=rename_dict[br]
+            br_df.to_csv(br_rename, sep='\t', index=False)
+            
     return
         
 
