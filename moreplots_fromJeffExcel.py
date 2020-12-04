@@ -99,7 +99,7 @@ def normToGen(rep_dict,gen):
 
 
 
-def PlotScatter37_36(figName,sp_T_dict_36,sc_T_dict_36,sp_T_dict_37,sc_T_dict_37):
+def PlotScatter37_36(figName,sp_T_dict_36,sc_T_dict_36,sp_T_dict_37,sc_T_dict_37,onlyGOI=False):
 
     fig=plt.figure(figsize=(20,15))
 
@@ -107,16 +107,24 @@ def PlotScatter37_36(figName,sp_T_dict_36,sc_T_dict_36,sp_T_dict_37,sc_T_dict_37
     y_sp=[]
     for key in sp_T_dict_36:
         if key in sp_T_dict_37:
-            x_sp.append(sp_T_dict_36[key])
-            y_sp.append(sp_T_dict_37[key])
+            if onlyGOI==False:
+                x_sp.append(sp_T_dict_36[key])
+                y_sp.append(sp_T_dict_37[key])
+            elif key in genes_to_bar:
+                x_sp.append(sp_T_dict_36[key])
+                y_sp.append(sp_T_dict_37[key])
 
     x_sc=[]
     y_sc=[]
     for key in sc_T_dict_36:
         if key in sc_T_dict_37:
-            x_sc.append(sc_T_dict_36[key])
-            y_sc.append(sc_T_dict_37[key])
-
+            if onlyGOI==False:
+                x_sc.append(sc_T_dict_36[key])
+                y_sc.append(sc_T_dict_37[key])
+            elif key in genes_to_bar:
+                x_sc.append(sc_T_dict_36[key])
+                y_sc.append(sc_T_dict_37[key])
+            
     line1=plt.scatter(x_sp, y_sp, color='#F1B629')
     line2=plt.scatter(x_sc, y_sc, color='#08A5CD')
 
@@ -180,7 +188,7 @@ def PlotBars(figName,dict_36,dict_37,norm=False):
 
     rectsS=ax.bar(ind+w/2,
        height=[np.mean(yi) for yi in yS],
-       width=w, label='37'+degree_sign, color=(0.75, 0.75, 0.75, 0.75), 
+       width=w, label='37'+degree_sign+'C', color=(0.75, 0.75, 0.75, 0.75), 
        edgecolor=colors,zorder=-1
        )
 
@@ -234,18 +242,25 @@ def PlotBars(figName,dict_36,dict_37,norm=False):
 sp_dict_37,sc_dict_37=ParseFitness(data_37)
 sp_T_dict_37,sc_T_dict_37=calcTStats(sp_dict_37,sc_dict_37)
 sp_norm_dict_37,sc_norm_dict_37=normToGen(sp_dict_37,gen_37),normToGen(sc_dict_37,gen_37)
+sp_norm_T_dict_37,sc_norm_T_dict_37=calcTStats(sp_norm_dict_37,sc_norm_dict_37)
 
 sp_dict_36,sc_dict_36=ParseFitness(data_36)
 sp_T_dict_36,sc_T_dict_36=calcTStats(sp_dict_36,sc_dict_36)
 sp_norm_dict_36,sc_norm_dict_36=normToGen(sp_dict_36,gen_36),normToGen(sc_dict_36,gen_36)
+sp_norm_T_dict_36,sc_norm_T_dict_36=calcTStats(sp_norm_dict_36,sc_norm_dict_36)
 
-####scatterplot of mean/stdev at 36 vs 37               
-#PlotScatter37_36(scatterFigName,sp_T_dict_36,sc_T_dict_36,sp_T_dict_37,sc_T_dict_37)
+####scatterplot of mean/stdev at 36 vs 37
+###whole genome
+##PlotScatter37_36(scatterFigName,sp_T_dict_36,sc_T_dict_36,sp_T_dict_37,sc_T_dict_37)
+##PlotScatter37_36("normToGen_"+scatterFigName,sp_norm_T_dict_36,sc_norm_T_dict_36,sp_norm_T_dict_37,sc_norm_T_dict_37)
+###only GOI
+PlotScatter37_36("goi_"+scatterFigName,sp_T_dict_36,sc_T_dict_36,sp_T_dict_37,sc_T_dict_37,onlyGOI=True)
+PlotScatter37_36("goi_normToGen_"+scatterFigName,sp_norm_T_dict_36,sc_norm_T_dict_36,sp_norm_T_dict_37,sc_norm_T_dict_37,onlyGOI=True)
 
 ####barplots: unnormalized
 ##PlotBars("sp_"+barFigName,sp_dict_36,sp_dict_37)
 ##PlotBars("sc_"+barFigName,sc_dict_36,sc_dict_37)
 
 ####barplots: fitness/generations
-PlotBars("sp_normToGen_"+barFigName,sp_norm_dict_36,sp_norm_dict_37,norm=True)
-PlotBars("sc_normToGen"+barFigName,sc_norm_dict_36,sc_norm_dict_37,norm=True)
+##PlotBars("sp_normToGen_"+barFigName,sp_norm_dict_36,sp_norm_dict_37,norm=True)
+##PlotBars("sc_normToGen"+barFigName,sc_norm_dict_36,sc_norm_dict_37,norm=True)
