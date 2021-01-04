@@ -3,22 +3,25 @@ from statistics import median
 import random
 
 '''
-resample ranked h12 H2/H1 ratios by gene (accounting for essentiality)
+resample ranked g1 by gene (or H1) (accounting for essentiality)
  
 '''
 #Parameters
 
 gff='/usr2/people/mabrams/Amended_Genomes/S288C/saccharomyces_cerevisiae_R64-1-1_20110208_withoutFasta.gff'
-roman_numerals_in_gff=True
 
 
 essential_genes='/usr2/people/mabrams/Amended_Genomes/essential.csv'
 
-goi=['YLR397C','YGR098C', 'YMR168C','YKR054C','YDR180W',
-     'YHR023W','YGR198W','YHR166C','YCR042C','YPL174C']
+
+goi=['YLR397C','YGR098C', 'YMR168C','YKR054C','YDR180W','YHR023W','YGR198W','YHR166C','YCR042C','YNL172W','YHR204W','YJR135C','YER090W','YBL066C'] ##unpaired analysis of Weiss et al. 2018 RH-Seq, padj<0.05
+goi=['YLR397C','YGR098C', 'YMR168C','YKR054C','YDR180W','YHR023W','YGR198W','YHR166C','YCR042C','YNL172W'] ##unpaired analysis of Weiss et al. 2018 RH-Seq, top 10 genes
+goi=['YLR397C','YGR098C', 'YMR168C','YKR054C','YDR180W','YHR023W','YGR198W','YHR166C','YCR042C'] ##unpaired analysis of Weiss et al. 2018 RH-Seq, p_adj<0.001
+goi=['YLR397C','YGR098C', 'YMR168C','YKR054C','YDR180W','YHR023W','YCR042C','YPL174C','YCR042C'] #unpaired, mean - YPR164W not in ranked genes
+goi=['YLR397C','YGR098C', 'YMR168C','YKR054C','YDR180W','YHR023W','YCR042C','YNL172W'] #Weiss analysis goi
 
 ###
-ranked_genes_G1 = sys.argv[1]
+
 
 def ParseFromGFF(gfffile):
     '''
@@ -26,11 +29,7 @@ def ParseFromGFF(gfffile):
     Input: SGD_features.tab file
     Output: dict of {chrom:{gene:[start,stop]}}
     '''
-    roman_to_numerals={
-        'chrI':'chr01','chrII':'chr02','chrIII':'chr03','chrIV':'chr04','chrV':'chr05',
-        'chrVI':'chr06','chrVII':'chr07','chrVIII':'chr08','chrIX':'chr09','chrX':'chr10',
-        'chrXI':'chr11','chrXII':'chr12','chrXIII':'chr13','chrXIV':'chr14','chrXV':'chr15',
-        'chrXVI':'chr16','chrMito':'chrMito','2-micron':'chr2u'}
+    
     gff_genes=[]
     
     f = open(gfffile)
@@ -73,19 +72,20 @@ def ParseEssential(essentialfile):
     #print(ess_genes)
     return ess_genes
 
-def test_goi_in_gff(goi):
+def test_goi_in_gff(goi,gff_genes,printGOI=True):
     present=[]
     for gene in goi:
         if gene not in gff_genes:
             print(str(gene)+' not in gff')
         else:
             present.append(gene)
-    print("tested the following goi: "+' '.join(present))
+    if printGOI==True:
+        print("tested the following goi: "+' '.join(present))
     return present
 
-def ParseRankedGenes(ranked_genes_g1):
+def ParseRankedGenes(ranked_genes_g1,printGeneG1=True):
     '''
-    Input: ranked h12 file
+    Input: ranked G1 file from .h12_h2h1
     Output: dictionary of gene:G1
     '''
 
@@ -103,7 +103,8 @@ def ParseRankedGenes(ranked_genes_g1):
     f.close()
 
     for gene in goi:
-        print("H12 of "+gene+": "+str(ranked_dict[gene]))
+        if printGeneG1==True:
+            print("G1 of "+gene+": \t"+str(ranked_dict[gene]))
 
 ##    print(ranked_dict)
 ##    print(ranked_dict['YLR397C'])
@@ -111,10 +112,10 @@ def ParseRankedGenes(ranked_genes_g1):
     return ranked_dict
 
 
-def resample(G1_dict, essential_genes, n_resample=10000):
+def resample(G1_dict, essential_genes, n_resample=10000,printResampling=True):
     '''resamples same num essential and nonessential genes'''
 
-    #get goi H12s and see if they're essential
+    #get goi G1s and see if they're essential
     goi_G1s=[]
     num_essential_goi=0
     for gene in goi:
@@ -124,12 +125,13 @@ def resample(G1_dict, essential_genes, n_resample=10000):
     num_goi=len(goi_G1s)
     num_nonessential_goi=num_goi-num_essential_goi
 
-    print('number essential goi : '+str(num_essential_goi))
-    print('number nonessential goi: '+str(num_nonessential_goi))
+    if printResampling==True:
+        print('number essential goi : \t'+str(num_essential_goi))
+        print('number nonessential goi: \t'+str(num_nonessential_goi))
         
     my_median=median(goi_G1s)
 
-    #split all tested H12 into essential and nonessential
+    #split all tested G1s into essential and nonessential
     ess_G1dict={}
     noness_G1dict={}
     for gene in G1_dict:
@@ -158,20 +160,26 @@ def resample(G1_dict, essential_genes, n_resample=10000):
             greater_medians+=1
 
     rv=greater_medians/float(n_resample)
-    print('rv: '+str(rv))
-    print('n_resample: '+str(n_resample))
-    print('median random median: ' +str(median(random_medians))+', goi median: '+str(my_median))
-        
-    
+    if printResampling==True:
+        print('rv: '+str(rv))
+        print('n_resample: '+str(n_resample))
+        print('median random median: \t' +str(median(random_medians))+'\n, goi median: \t'+str(my_median))
+            
+    return rv
     
 
 
 
 ##RUN###
 
-gff_genes=ParseFromGFF(gff)
-tested_goi=test_goi_in_gff(goi)
+if __name__ == "__main__":
 
-essential_genes=ParseEssential(essential_genes)
-G1_dict=ParseRankedGenes(ranked_genes_G1)
-resample(G1_dict,essential_genes)
+    
+    ranked_genes_G1 = sys.argv[1]
+
+    gff_genes=ParseFromGFF(gff)
+    tested_goi=test_goi_in_gff(goi,gff_genes)
+
+    essential_genes=ParseEssential(essential_genes)
+    G1_dict=ParseRankedGenes(ranked_genes_G1)
+    rv=resample(G1_dict,essential_genes)
