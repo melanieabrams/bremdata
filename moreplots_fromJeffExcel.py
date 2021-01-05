@@ -17,11 +17,19 @@ gen_36=[12.84584039,12.96574443,12.82881066,12.47694361,12.69612127,12.57667477,
 data_37='geneFit_37C_dropNA_allele_sorted.csv'
 gen_37=[10.71381697,10.6059797,10.70591248,10.74969728,10.72307974,10.87017294,10.95210186,10.61683005,9.636340693,10.18646952,10.72492607,10.55877579]
 
+data_38='geneFit_38C_dropNA_allele_sorted.csv'
+gen_38=[5.123086751,5.10433666,5.121015401,5.203592714,5.037821465,5.022367813,4.83541884,4.882643049,4.832890014,4.794415866,4.860466259,4.87036472]
+
+
+
 scatterFigName='36_and_37_MeansStdevScatter.pdf'
+scatterFigName_for38='37_and_38_MeanStdevScatter.pdf'
 
 degree_sign='\u00b0'
 
 barFigName='36_and_37_fitnessBars.png'
+barFigName3='36_37_and_38_fitnessBars.png'
+
 genes_to_bar=['YGR098C','YMR168C','YHR023W','YLR397C','YKR054C','YDR180W','YGR198W','YHR166C','YCR042C','YPL174C','YEL030W','YOR151C','YNL027W','YBR136W','YGL205W']
 
 
@@ -98,7 +106,6 @@ def normToGen(rep_dict,gen):
             
 
 
-
 def PlotScatter37_36(figName,sp_T_dict_36,sc_T_dict_36,sp_T_dict_37,sc_T_dict_37,onlyGOI=False):
 
     fig=plt.figure(figsize=(20,15))
@@ -140,7 +147,51 @@ def PlotScatter37_36(figName,sp_T_dict_36,sc_T_dict_36,sp_T_dict_37,sc_T_dict_37
     plt.rc('ytick',labelsize=80)
     plt.savefig(figName, bbox_inches='tight', format='pdf',dpi=1000)
 
-def PlotBars(figName,dict_36,dict_37,norm=False):
+
+def PlotScatter37_38(figName,sp_T_dict_37,sc_T_dict_37,sp_T_dict_38,sc_T_dict_38,onlyGOI=False):
+
+    fig=plt.figure(figsize=(20,15))
+
+    x_sp=[]
+    y_sp=[]
+    for key in sp_T_dict_37:
+        if key in sp_T_dict_38:
+            if onlyGOI==False:
+                x_sp.append(sp_T_dict_37[key])
+                y_sp.append(sp_T_dict_38[key])
+            elif key in genes_to_bar:
+                x_sp.append(sp_T_dict_37[key])
+                y_sp.append(sp_T_dict_38[key])
+
+    x_sc=[]
+    y_sc=[]
+    for key in sc_T_dict_37:
+        if key in sc_T_dict_38:
+            if onlyGOI==False:
+                x_sc.append(sc_T_dict_37[key])
+                y_sc.append(sc_T_dict_38[key])
+            elif key in genes_to_bar:
+                x_sc.append(sc_T_dict_37[key])
+                y_sc.append(sc_T_dict_38[key])
+            
+    line1=plt.scatter(x_sp, y_sp, color='#08A5CD')
+    line2=plt.scatter(x_sc, y_sc, color='#FF8000')
+
+    plt.hlines(0,-4,4,colors='grey',linestyles='dashed', linewidth=1)
+    plt.vlines(0,-4,4,colors='grey',linestyles='dashed',linewidth=1)
+
+    plt.legend((line1, line2), ('sp', 'sc'))
+    
+    plt.title(figName.split('.')[0],fontsize=80,loc='center')
+    plt.ylabel('38 means/sdtevs', fontsize=80)
+    plt.xlabel('37 means/sdtevs', fontsize=80)
+    plt.rc('xtick',labelsize=80)
+    plt.rc('ytick',labelsize=80)
+    plt.savefig(figName, bbox_inches='tight', format='pdf',dpi=1000)
+
+
+
+def Plot2Bars(figName,dict_36,dict_37,norm=False):
     '''bar plots of genes of interest' fitness for the allele passed in the dict''' #note: modified from stationary/active plot, hence A and S naming
 
     w=0.35 #bar width
@@ -222,7 +273,127 @@ def PlotBars(figName,dict_36,dict_37,norm=False):
     x_for_line_at_1 = [ax.patches[0].get_x(), ax.patches[-1].get_x() + ax.patches[-1].get_width()] #https://stackoverflow.com/questions/38017465/how-to-add-a-line-on-top-of-a-bar-chart
     ax.plot(x_for_line_at_1, [0,0], 'r--', c='grey', linewidth=1)
 
-    plt.ylabel('Raw Fitness Score (Temp vs. 28'+degree_sign+'C)', fontsize=fontsize)
+    if norm==True:
+        plt.ylabel('Generation-Normalized Fitness Score (Temp vs. 28'+degree_sign+'C)', fontsize=fontsize)
+    else:
+        plt.ylabel('Raw Fitness Score (Temp vs. 28'+degree_sign+'C)', fontsize=fontsize)
+    plt.xlabel('GOI', fontsize=fontsize)
+
+##    plt.yscale('log')
+##    plt.ylim(10**2,5*10**7)
+
+    print('done plotting bar plot: '+figName)
+    plt.tight_layout()
+
+    plt.savefig(figName)
+    
+    return
+
+
+def Plot3Bars(figName,dict_36,dict_37,dict_38,norm=False):
+    '''bar plots of genes of interest' fitness for the allele passed in the dict''' #note: modified from stationary/active plot, hence A and S naming
+
+    w=0.2 #bar width
+
+    fontsize=16
+
+    colors=[] #replace colors with B/W
+    for i in range(len(genes_to_bar)):
+        colors.append((0,0,0))
+
+    #colors for replicates' dots
+    A_colors=[] 
+    for i in range(len(genes_to_bar)):
+        A_colors.append((0.5, 0.75, 1, 1))
+
+    S_colors=[] 
+    for i in range(len(genes_to_bar)):
+        S_colors.append((0.75, 0.75, 0.75, 1))
+
+    H_colors=[]
+    for i in range(len(genes_to_bar)):
+        H_colors.append((1,0.5,0,1))
+    
+        
+    x=range(len(genes_to_bar)) #x: num genes of interest
+    yS=[] #y: mean of bioreps for the strains, A for 36, S for 37
+    yA=[]
+    yH=[]
+    Alabels= [ ] #label: gene names in order
+    Slabels= [ ]
+    Hlabels= [ ]
+
+
+    for gene in genes_to_bar:
+        yA.append(np.array(dict_36[gene]))
+        Alabels.append(gene)
+    for gene in genes_to_bar:
+        yS.append(np.array(dict_37[gene]))
+        Slabels.append(gene)
+    for gene in genes_to_bar:
+        yH.append(np.array(dict_38[gene]))
+        Hlabels.append(gene)
+
+          
+    fig, ax = plt.subplots(figsize=(18,6))
+    ind=np.arange(len(yA))
+
+    rectsA=ax.bar(ind-w,
+       height=[np.mean(yi) for yi in yA],
+       width=w,    # bar width
+       label='36'+degree_sign, color=(0.5, 0.75, 1, 0.75),  
+       edgecolor=colors,zorder=-1
+       )
+
+    rectsS=ax.bar(ind+0,
+       height=[np.mean(yi) for yi in yS],
+       width=w, label='37'+degree_sign+'C', color=(0.75, 0.75, 0.75, 0.75), 
+       edgecolor=colors,zorder=-1
+       )
+
+    rectsH=ax.bar(ind+w,
+       height=[np.mean(yi) for yi in yH],
+       width=w, label='38'+degree_sign+'C', color=(1.0, 0.5, 0.0, 0.75), 
+       edgecolor=colors,zorder=-1
+       )
+ 
+
+    ax.set_xticks(ind)
+    ax.set_xticklabels(genes_to_bar,fontsize=8)
+    ax.legend(fontsize=8)
+
+    plt.yticks(fontsize=8)
+    plt.ylim(-10,10)
+    ax.set_yticks(range(-10,10))
+    if norm==True:
+        plt.ylim(-1,1)
+        ax.set_yticks(range(-1,1))
+
+    #ax.set_yticks(range(-5,5))
+
+
+    #scatter individual strains yA
+    for i in range(int(len(x))):
+        nonzero_yi=np.where(yA[i]==0, 1, yA[i]) 
+        yA_scatter=ax.scatter(x[i] + np.full_like(nonzero_yi,0.5) * w - w / 2 - w, nonzero_yi, color=A_colors[i],zorder=1)
+
+    #scatter individual strains yS
+    for i in range(int(len(x))):
+        nonzero_yi=np.where(yS[i]==0, 1, yS[i]) 
+        yS_scatter=ax.scatter(x[i] + np.full_like(nonzero_yi,0.5) * w - w / 2 +0 , nonzero_yi, color=S_colors[i],zorder=1)
+
+    #scatter individual strains yH
+    for i in range(int(len(x))):
+        nonzero_yi=np.where(yH[i]==0, 1, yH[i]) 
+        yH_scatter=ax.scatter(x[i] + np.full_like(nonzero_yi,0.5) * w - w / 2 + w , nonzero_yi, color=H_colors[i],zorder=1)
+   
+    x_for_line_at_1 = [ax.patches[0].get_x(), ax.patches[-1].get_x() + ax.patches[-1].get_width()] #https://stackoverflow.com/questions/38017465/how-to-add-a-line-on-top-of-a-bar-chart
+    ax.plot(x_for_line_at_1, [0,0], 'r--', c='grey', linewidth=1)
+    
+    if norm==True:
+        plt.ylabel('Generation-Normalized Fitness Score (Temp vs. 28'+degree_sign+'C)', fontsize=fontsize)
+    else:
+        plt.ylabel('Raw Fitness Score (Temp vs. 28'+degree_sign+'C)', fontsize=fontsize)
     plt.xlabel('GOI', fontsize=fontsize)
 
 ##    plt.yscale('log')
@@ -239,6 +410,7 @@ def PlotBars(figName,dict_36,dict_37,norm=False):
 
 ###RUN
 
+
 sp_dict_37,sc_dict_37=ParseFitness(data_37)
 sp_T_dict_37,sc_T_dict_37=calcTStats(sp_dict_37,sc_dict_37)
 sp_norm_dict_37,sc_norm_dict_37=normToGen(sp_dict_37,gen_37),normToGen(sc_dict_37,gen_37)
@@ -249,18 +421,45 @@ sp_T_dict_36,sc_T_dict_36=calcTStats(sp_dict_36,sc_dict_36)
 sp_norm_dict_36,sc_norm_dict_36=normToGen(sp_dict_36,gen_36),normToGen(sc_dict_36,gen_36)
 sp_norm_T_dict_36,sc_norm_T_dict_36=calcTStats(sp_norm_dict_36,sc_norm_dict_36)
 
+
+###for just 36 and 37
 ####scatterplot of mean/stdev at 36 vs 37
 ###whole genome
 ##PlotScatter37_36(scatterFigName,sp_T_dict_36,sc_T_dict_36,sp_T_dict_37,sc_T_dict_37)
 ##PlotScatter37_36("normToGen_"+scatterFigName,sp_norm_T_dict_36,sc_norm_T_dict_36,sp_norm_T_dict_37,sc_norm_T_dict_37)
 ###only GOI
-PlotScatter37_36("goi_"+scatterFigName,sp_T_dict_36,sc_T_dict_36,sp_T_dict_37,sc_T_dict_37,onlyGOI=True)
-PlotScatter37_36("goi_normToGen_"+scatterFigName,sp_norm_T_dict_36,sc_norm_T_dict_36,sp_norm_T_dict_37,sc_norm_T_dict_37,onlyGOI=True)
+#PlotScatter37_36("goi_"+scatterFigName,sp_T_dict_36,sc_T_dict_36,sp_T_dict_37,sc_T_dict_37,onlyGOI=True)
+#PlotScatter37_36("goi_normToGen_"+scatterFigName,sp_norm_T_dict_36,sc_norm_T_dict_36,sp_norm_T_dict_37,sc_norm_T_dict_37,onlyGOI=True)
 
-####barplots: unnormalized
-##PlotBars("sp_"+barFigName,sp_dict_36,sp_dict_37)
-##PlotBars("sc_"+barFigName,sc_dict_36,sc_dict_37)
-
+##barplots: unnormalized
+##Plot2Bars("sp_"+barFigName,sp_dict_36,sp_dict_37)
+##Plot2Bars("sc_"+barFigName,sc_dict_36,sc_dict_37)
+##
 ####barplots: fitness/generations
-##PlotBars("sp_normToGen_"+barFigName,sp_norm_dict_36,sp_norm_dict_37,norm=True)
-##PlotBars("sc_normToGen"+barFigName,sc_norm_dict_36,sc_norm_dict_37,norm=True)
+##Plot2Bars("sp_normToGen_"+barFigName,sp_norm_dict_36,sp_norm_dict_37,norm=True)
+##Plot2Bars("sc_normToGen"+barFigName,sc_norm_dict_36,sc_norm_dict_37,norm=True)
+
+
+#for all 3
+
+sp_dict_38,sc_dict_38=ParseFitness(data_38)
+sp_T_dict_38,sc_T_dict_38=calcTStats(sp_dict_38,sc_dict_38)
+sp_norm_dict_38,sc_norm_dict_38=normToGen(sp_dict_38,gen_38),normToGen(sc_dict_38,gen_38)
+sp_norm_T_dict_38,sc_norm_T_dict_38=calcTStats(sp_norm_dict_38,sc_norm_dict_38)
+
+######barplots: unnormalized
+##Plot3Bars("sp_"+barFigName3,sp_dict_36,sp_dict_37,sp_dict_38)
+##Plot3Bars("sc_"+barFigName3,sc_dict_36,sc_dict_37,sc_dict_38)
+##
+######barplots: fitness/generations
+##Plot3Bars("sp_normToGen_"+barFigName3,sp_norm_dict_36,sp_norm_dict_37,sp_norm_dict_38,norm=True)
+##Plot3Bars("sc_normToGen"+barFigName3,sc_norm_dict_36,sc_norm_dict_37,sc_norm_dict_38,norm=True)
+
+
+####scatterplot of mean/stdev at 37 vs 38
+#whole genome
+PlotScatter37_38(scatterFigName_for38,sp_T_dict_37,sc_T_dict_37,sp_T_dict_38,sc_T_dict_38)
+PlotScatter37_38("normToGen_"+scatterFigName_for38,sp_norm_T_dict_37,sc_norm_T_dict_37,sp_norm_T_dict_38,sc_norm_T_dict_38)
+#only GOI
+PlotScatter37_38("goi_"+scatterFigName_for38,sp_T_dict_37,sc_T_dict_37,sp_T_dict_38,sc_T_dict_38,onlyGOI=True)
+PlotScatter37_38("goi_normToGen_"+scatterFigName_for38,sp_norm_T_dict_37,sc_norm_T_dict_37,sp_norm_T_dict_38,sc_norm_T_dict_38,onlyGOI=True)
