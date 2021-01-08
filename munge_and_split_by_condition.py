@@ -1,7 +1,7 @@
 import pandas as pd
 #Parameters
 
-inFileName='geneFit_all_3readfilter_individual_replicates.txt'
+inFileName='geneFit_all_1readfilter_individual_replicates.txt'
 #outFileName='geneFit_all_for_Tstat_MA.txt'
 outFileName='default'
 conditions=['36C','37C','38C']
@@ -28,13 +28,20 @@ def mungeAndSplit(inFileName,conditions,outFileName=outFileName):
     #split by condition and save
     for condition in conditions:
         columns_to_drop = []
+        renamed_columns = {}
         for column in df.columns:
             if 'averaged_references' in column:
                 if condition not in column:
                     columns_to_drop.append(column)
+                else:
+                    br_n=column.split('_')[1]
+                    br_T=column.split('_')[0]
+                    br_ref=column.split('_vs')[1]
+                    renamed_columns[column]='Biorep_'+br_n+'_'+br_T+'_vs'+br_ref
         condition_df=df.drop(columns=columns_to_drop)
+        condition_df=condition_df.rename(columns=renamed_columns)
         conditionOutFileName=condition+'_'+outFileName
-        #print(condition_df)
+        print(condition_df)
         condition_df.to_csv(conditionOutFileName, sep='\t', index=False)
 
     return None
