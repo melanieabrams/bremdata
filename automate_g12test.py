@@ -1,21 +1,21 @@
 import sys
 
-from resample_g1 import * #both in the ~/scripts/ folder of /usr2/people/mabrams on thar
+from resample_g1 import * #both in the ~/scripts/ folder of /usr2/people/mabrams on thar.  Resample g1 and g12 are the same script, pulling the same column of their respective rank files, g2g1 pulls from the second column.
 
 
+#same as automate-g1_test scripts but use the ranked file with g12 as the first column after gene and g2g1 as second
 
 ##Parameters##
 essential_gene_path='/usr2/people/mabrams/Amended_Genomes/essential.csv'
 gff='/usr2/people/mabrams/Amended_Genomes/S288C/saccharomyces_cerevisiae_R64-1-1_20110208_withoutFasta.gff'
 printLots=True #set to off for less output text 
 
-
-ranked_g1_paths={
-    '1Wine':'/usr2/people/mabrams/data/g1_5top/1Wine/merged_1WineEuropean_g1_ranked.txt',
-    'M3': '/usr2/people/mabrams/data/g1_5top/M3/merged_M3_MosaicRegion3_g1_ranked.txt',
-    '8Mixed': '/usr2/people/mabrams/data/g1_5top/8Mixed/merged_8MixedOrigin_g1_ranked.txt',
-    '25Sake': '/usr2/people/mabrams/data/g1_5top/25Sake/merged_25Sake_g1_ranked.txt',
-    '3Brazil': '/usr2/people/mabrams/data/g1_5top/3Brazil/merged_3BrazilianBioethanol_g1_ranked.txt'}
+ranked_g12_paths={
+    '1Wine':'/usr2/people/mabrams/data/g1_5top/1Wine/merged_1WineEuropean_ranked.txt',
+    'M3': '/usr2/people/mabrams/data/g1_5top/M3/merged_M3_MosaicRegion3_ranked.txt',
+    '8Mixed': '/usr2/people/mabrams/data/g1_5top/8Mixed/merged_8MixedOrigin_ranked.txt',
+    '25Sake': '/usr2/people/mabrams/data/g1_5top/25Sake/merged_25Sake_ranked.txt',
+    '3Brazil': '/usr2/people/mabrams/data/g1_5top/3Brazil/merged_3BrazilianBioethanol_ranked.txt'}
 
 ##goi_lists={
 ##    'published analysis of Weiss et al. 2018 RH-Seq, padj<0.05':[
@@ -68,16 +68,18 @@ goi_lists={
 
 
 
+
+
 ##Functions##
 
 def getResample(pop,goi_list,gff_genes):
     if printLots==True:
         print('\n\npopulation:\t'+pop)
-    ranked_genes_G1=ranked_g1_paths[pop]
+    ranked_genes_G12=ranked_g12_paths[pop]
     tested_goi=test_goi_in_gff(goi_list,gff_genes,printGOI=printLots)
     essential_genes=ParseEssential(essential_gene_path)
-    G1_dict=ParseRankedGenes(ranked_genes_G1,goi_list,printGeneG1=printLots)
-    rv=resample(G1_dict,essential_genes,goi_list,printResampling=printLots) #resample that given G1 and don't print longform (gene by gene, num essential, etc)
+    G12_dict=ParseRankedGenes(ranked_genes_G12,goi_list,printGeneG1=printLots)
+    rv=resample(G12_dict,essential_genes,goi_list,printResampling=printLots) #resample that given G12 and don't print longform (gene by gene, num essential, etc)
     if rv<0.05:
         print(pop,str(rv)+'*')
         return rv, 's'
@@ -85,12 +87,12 @@ def getResample(pop,goi_list,gff_genes):
         print(pop, rv)
         return rv, 'ns'
 
-def resampleAllCombos(ranked_g1_paths,goi_lists,gff_genes):
+def resampleAllCombos(ranked_g12_paths,goi_lists,gff_genes):
     for goi_list_desc in goi_lists:
         significant=0
         print('==='+goi_list_desc+'===')
         goi_list=goi_lists[goi_list_desc]
-        for pop in ranked_g1_paths:
+        for pop in ranked_g12_paths:
             p,sig=getResample(pop,goi_list,gff_genes)
             if sig=='s':
                 significant+=1
@@ -102,5 +104,5 @@ def resampleAllCombos(ranked_g1_paths,goi_lists,gff_genes):
 if __name__ == "__main__":
     
     gff_genes=ParseFromGFF(gff)
-    resampleAllCombos(ranked_g1_paths,goi_lists,gff_genes)
+    resampleAllCombos(ranked_g12_paths,goi_lists,gff_genes)
     
