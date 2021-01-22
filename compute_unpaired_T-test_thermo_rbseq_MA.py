@@ -144,7 +144,10 @@ def calc_pairs_and_compute_stats(munged_file):
      
         
         # mwu_test = stats.wilcoxon(sc_inserts_ratios, sp_inserts_ratios)         # wilcoxon
-        mwu_test = stats.mannwhitneyu(sc_inserts_ratios, sp_inserts_ratios)   # mwu test
+        try:
+            mwu_test = stats.mannwhitneyu(sc_inserts_ratios, sp_inserts_ratios)   # mwu test
+        except ValueError:
+            mwu_test = [1.0,1.0] #throws this error if they're all the same
         # mwu_test = stats.ttest_ind(sc_inserts_ratios, sp_inserts_ratios)      # t-test
         
         two_tailed_pval = mwu_test[1] * 2.0
