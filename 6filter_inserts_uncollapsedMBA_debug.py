@@ -15,8 +15,10 @@ import numpy as np
 # also saves a file before filtering with all the coding inserts "all_data.unfiltered_inserts_coding"
 # if you want to try multiple filtering schemes, this is the point where you will have to run through the rest of the analysis separately for every separate filtered file
 
-coeff_var_cutoff = 1.0 #cutoff for coefficient of variation
-norm_reads_cutoff = 10 # cutoff for normalized read count
+#fixed 1/28/2021 so numbers converted to floats for filtering for correct boolean comparisons
+
+coeff_var_cutoff = 2.0 #cutoff for coefficient of variation
+norm_reads_cutoff = 1.1 # cutoff for normalized read count
 filter_strategy = 'both' # can be 'coeff' or 'reads' or 'both'
 
 
@@ -113,22 +115,9 @@ if __name__ == '__main__':
 		for column in all_columns_to_filter_by:
                         all_filt_col_float_dict[column]='float'
                 group3=group3.astype(all_filt_col_float_dict)
-                
-		#print(group3[columns_to_filter_by])		
+	
 		filtered = group3[(group3[columns_to_filter_by[0]] <= coeff_var_cutoff) | (group3[columns_to_filter_by[1]] <= coeff_var_cutoff)]
-		#filtered = group3[(group3[columns_to_filter_by[0]] < coeff_var_cutoff)]
-
-		#print(group3[columns_to_filter_by[0]])
-		#unfiltered = group3[(group3[columns_to_filter_by[0]] > 500000)]
-		
-                #group3=group3.astype({'28_br_coeffvar':'float'})
-		
-		#print(unfiltered['28_br_coeffvar'])
-                
-		#print(filtered[columns_to_filter_by2])		
 		filtered2 = filtered[(filtered[columns_to_filter_by2[0]] >= norm_reads_cutoff) | (filtered[columns_to_filter_by2[1]] >= norm_reads_cutoff)]
-                #unfiltered2 = filtered[(filtered[columns_to_filter_by2[0]] <= norm_reads_cutoff) | (filtered[columns_to_filter_by2[1]] <= norm_reads_cutoff)]
-
 		
 		
 		print len(group3), 'before filtering'
