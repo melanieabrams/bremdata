@@ -53,25 +53,13 @@ if __name__ == '__main__':
                                 if biorep == '28_br_averaged_reads':
                                         avg28 = biorep
                         div39_28 = each_df[biorep39]/each_df[avg28]
-                        #div39_28 = each_df[biorep39]/each_df[avg28]
                         colName = '39_28_log2' + repID
                         print(colName)
                         each_df[colName] = np.log2(div39_28)
 
-                #each_df[colName]=each_df[colName].replace([np.inf, -np.inf,np.nan], 'None')
-                        
 
-		#read_columns = [col for col in columns if '_averaged_reads' in col] CHANGED FROM THIS TO ALLOW PRESERVATION BIOREP STR
-##		for each_col in read_columns:
-##			if each_col.startswith('28'):
-##				reads_28 = each_col
-##			if each_col.startswith('39'):
-##				reads_39 = each_col
-##			if each_col.startswith('T0'):
-##				reads_T0 = each_col
-##		div39_28 = each_df[reads_39] / each_df[reads_28]
-##		each_df['39_28_log2'] = np.log2(div39_28)
 
-                each_df=each_df.replace([np.inf, -np.inf,np.nan], 'None')
+                #each_df=each_df.replace([np.inf, -np.inf,np.nan], 'None')
+                each_df=each_df.replace([np.inf, -np.inf], np.nan)
                 print('writing csv...')
 		each_df.to_csv(str(output_folder)+str('/')+str(file_identifier)+'_unpaired.insert_ratios', sep='\t', index=False)
