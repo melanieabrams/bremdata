@@ -135,42 +135,24 @@ if __name__ == '__main__':
                     sp_df = gene_df.loc[gene_df['allele'] == 'sp']
                     sc_columns = sc_df.columns.values
                     sp_columns = sp_df.columns.values
-                    sc_bioreps = [col for col in sc_columns if col.startswith('39_28_log2') and col.endswith('_n_av')]
-                    sp_bioreps = [col for col in sp_columns if col.startswith('39_28_log2') and col.endswith('_n_av')]
-                    for biorep in sc_bioreps: #recollapse here.  np.mean returning empty list, so just wrote function out to average.
-                        br_inserts_ratios=[float(x) for x in sc_df[biorep].tolist() if str(x)!='nan']
-                        sum_br_ins_ratios=0
-                        len_br_ins_ratios=0
-                        for i in br_inserts_ratios:
-                                sum_br_ins_ratios+=i
-                                len_br_ins_ratios+=1
-                        if len_br_ins_ratios>0:
-                                sc_inserts_ratios+=[sum_br_ins_ratios/float(len_br_ins_ratios)]
-##                        print('biorep')
-##                        print(br_inserts_ratios)
-##                        print(sc_inserts_ratios)
-##                        exit()
+                    sc_bioreps = [col for col in sc_columns if col.startswith('39_28_log2') and col.endswith('br_averaged_reads')] #recollapse here by only taking averages
+                    sp_bioreps = [col for col in sp_columns if col.startswith('39_28_log2') and col.endswith('br_averaged_reads')]
+                    for biorep in sc_bioreps:
+                        sc_inserts_ratios+=sc_df[biorep].tolist() 
                     for biorep in sp_bioreps:
-                        br_inserts_ratios=[float(x) for x in sp_df[biorep].tolist() if str(x)!='nan']
-                        sum_br_ins_ratios=0
-                        len_br_ins_ratios=0
-                        for i in br_inserts_ratios:
-                                sum_br_ins_ratios+=i
-                                len_br_ins_ratios+=1
-                        if len_br_ins_ratios>0:
-                                sp_inserts_ratios+=[sum_br_ins_ratios/float(len_br_ins_ratios)]
-                    sc_inserts_ratios[:] = [x for x in sc_inserts_ratios if str(x)!='nan']
-                    sp_inserts_ratios[:] = [x for x in sp_inserts_ratios if str(x)!='nan']
-##                    if each_gene == "YAL060W":
-##                            print(each_gene)
-##                            print("sc_inserts_ratios")
-##                            for i in sc_inserts_ratios:
-##                                    print(i)
-##                            print("sp_inserts_ratios")
-##                            print(len(sp_inserts_ratios), "len")
-##                            print(type(sp_inserts_ratios),"type")
-##                            for i in sp_inserts_ratios:
-##                                    print(i)
+                        sp_inserts_ratios+=sp_df[biorep].tolist()   
+                    sc_inserts_ratios[:] = [x for x in sc_inserts_ratios if str(x) != 'nan']
+                    sp_inserts_ratios[:] = [x for x in sp_inserts_ratios if str(x) != 'nan']
+                    if each_gene == "YHR034C":
+                            print(each_gene)
+                            print("sc_inserts_ratios")
+                            for i in sc_inserts_ratios:
+                                    print(i)
+                            print("sp_inserts_ratios")
+                            print(len(sp_inserts_ratios), "len")
+                            print(type(sp_inserts_ratios),"type")
+                            for i in sp_inserts_ratios:
+                                    print(i)
  
                     mwu_test = stats.mannwhitneyu(sc_inserts_ratios, sp_inserts_ratios)   # mwu test
                     two_tailed_pval = mwu_test[1] * 2.0
