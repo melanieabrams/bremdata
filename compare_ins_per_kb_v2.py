@@ -136,50 +136,6 @@ def plotScatter(df):
 
 
 
-def get_goi_df(df):
-    print('...filtering for goi')
-
-    #filter for goi
-    df['ingoi']=df.apply(lambda x: x['gene'] in goi,axis=1)
-    df=df[df.ingoi==True]
-    df=df.drop(columns=['ingoi'])
-    print('goi in 37C dataset: '+str(len(df)) +'out of '+str(len(goi)))
-    print(df['gene'].to_list())
-    print()
-    #df = df.set_index('gene')
-
-    return df
-
-
-def resample(df,goi_df,n=10000):
-
-    goi_median=goi_df['directional_effect_size'].median()
-
-    df['essential']= df['gene'].isin(essential_genes)
-    
-    essential_df=df[df['essential']==True]
-    non_essential_df=df[df['essential']==False]
-
-    ##get n random samples of the same # of essential and nonessential genes
-    print('- number of random samples: '+str(n))
-    random_samples=[]
-    for i in range(n):
-        random_sample = list(random.sample(essential_df.gene.tolist(),essential_count))
-        random_sample+= list(random.sample(non_essential_df.gene.tolist(),non_essential_count))
-        random_df=df[df['gene'].isin(random_sample)==True]
-        random_df_median=random_df['directional_effect_size'].median()
-        random_samples.append(random_df_median)
-    #print(sample_dfs[-1])
-    print(random_samples)
-    
-
-    rv=0.0
-    for random_median in random_samples:
-        if random_median>=goi_median:
-            rv+=1
-    p=(rv/float(n))
-    print(p)
-    return p
 
 
 
@@ -194,28 +150,4 @@ if __name__ == "__main__":
         
         df=calcInsPerKb(fgi_df,dxy_dict,p_dict,gene_length_dict)
         plotScatter(df)
-
-        
-##        goi_df=get_goi_df(df)
-##    
-##
-##       
-##        #print(all37)
-##
-##        essential_genes=ParseEssential(essential_file)
-##
-##    
-##        #split goi into essential and non essential genes
-##
-##        essential_goi = [gene for gene in goi if gene in essential_genes]
-##        essential_count=len(essential_goi)
-##        print('\nessential goi ('+str(essential_count)+'):')
-##        print(essential_goi)
-##        non_essential_goi=[gene for gene in goi if gene not in essential_genes]
-##        non_essential_count=len(non_essential_goi)
-##        print('\nnonessential goi ('+str(non_essential_count)+'):')
-##        print(non_essential_goi)
-##
-##        #resample
-##        resample(df36,goi36,n=10000)
 
