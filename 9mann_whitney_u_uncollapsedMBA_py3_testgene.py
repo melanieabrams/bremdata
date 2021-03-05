@@ -160,7 +160,7 @@ if __name__ == '__main__':
                     if sc_inserts_ratios == [] or sp_inserts_ratios ==[]:
                             del unique_genes_dict[each_gene]
                             del pval_dict[each_gene]
-                            print(each_gene)
+#                            print(each_gene)
 
 		gene_list = []
 		pvalue_list = []

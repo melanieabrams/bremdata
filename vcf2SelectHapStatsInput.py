@@ -5,12 +5,17 @@ import sys
 
 ##USGAGE: python vcf2SelectHapStatsInput.py vcf_filename
 
-##NOTE: NEED TO EDIT THIS TO WORK ON THE MERGED FILE INSTEAD, IT'S NOT QUITE RIGHT
 
 ##PARAMETERS
-samples_to_exclude=['N-44','YPS138','UFRJ50816','IFO1804','Q31.4']
-#the first four of those ('N-44','YPS138','UFRJ50816','IFO1804') are outside of the population of interest but in the source vcf
-#the last one (Q31.4) is there because it has a LOT of uncalled sites in the vcf
+#samples_to_exclude=['N-44','YPS138','UFRJ50816','IFO1804','Q31.4'] # for Bergstrom 2014 S paradoxus
+        #the first four of those ('N-44','YPS138','UFRJ50816','IFO1804') are outside of the population of interest but in the source vcf
+        #the last one (Q31.4) is there because it has a LOT of uncalled sites in the vcf
+
+samples_to_exclude=[] # for 1011 genomes (all pop)
+
+heterozygous_present=True # false for Bergstrom 2014 S paradoxus, true  for 1011 genomes S cerevisiae
+
+
 
 ##RUN
 
@@ -35,14 +40,22 @@ def main():
                                     num_samples_tested+=1
                             if call.gt_type!=None and call.gt_bases!=None:
                                 allele=call.gt_bases
+                                if heterozygous_present==True:
+                                        bases=allele.split('/')
+                                        if bases[0]!=bases[1]:
+                                                allele='.' # represent heterozygous GT as dots
+                                        else:
+                                                allele=bases[0] #if homozygous, represent GT as the base
+                                if len(allele)>1:
+                                        allele = 'INDEL'
                             else:
-                                allele='.'
+                                allele='None'
                                 if sample in missing_data:
                                         missing_data[sample]+=','+str(pos)
                                 else:
                                         missing_data[sample]=str(pos)
                             pos_line+=","+str(allele)
-                if '.' not in pos_line:
+                if 'INDEL' not in pos_line and 'None' not in pos_line:
                         wf.writelines(pos_line+"\n") #omit lines with missing data
 ##                print(pos_line)
 ##                exit() #break for speediness

@@ -14,8 +14,8 @@ import sys
 # also saves a file before filtering with all the coding inserts "all_data.unfiltered_inserts_coding"
 # if you want to try multiple filtering schemes, this is the point where you will have to run through the rest of the analysis separately for every separate filtered file
 
-coeff_var_cutoff = 1.5 #cutoff for coefficient of variation
-norm_reads_cutoff = 1.1 # cutoff for normalized read count
+coeff_var_cutoff = 3.3 #cutoff for coefficient of variation
+norm_reads_cutoff = 16 # cutoff for normalized read count
 filter_strategy = 'both' # can be 'coeff' or 'reads' or 'both'
 
 

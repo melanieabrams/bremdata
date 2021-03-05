@@ -14,8 +14,8 @@ import re
 # generates a file specific to this coevar and filtering number, added to the file name at the end: "_coevar#_filter#"
 # for all inserts within a given allele, calculate the mean of all the log2(39/28) for each insert, "mean39_28"
 
-number_inserts_per_allele_needed_to_test = 2.0
-cutoff_gene_cv_ratio = 20.0 #coefficient of variation of the ratio of 39/28 for an insert
+number_inserts_per_allele_needed_to_test = 1.0
+cutoff_gene_cv_ratio = 5000.0 #coefficient of variation of the ratio of 39/28 for an insert
 
 def parse_file(filename, sep='\t'): 
 	df = pd.read_csv(filename, sep=sep)
