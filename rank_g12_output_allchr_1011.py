@@ -3,9 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 '''
-rank selecthapstats g1 (or h1) outputs by gene
+rank selecthapstats g12(or h12) outputs by gene
 assuming file name in form: 
-merged_6AfricanBeer_chromosome1.h12_h1h2
+merged_6AfricanBeer_chromosome1.h12_h2h1
 
 '''
 #Parameters
@@ -20,7 +20,8 @@ save_prefix=filenames[0].split('_chromosome')[0]
 
 def ParseFromGFF(gfffile):
     '''
-    Parses gff
+    Parses SGD features flat file
+    Input: SGD_features.tab file
     Output: dict of {chrom:{gene:[start,stop]}}
     '''
     roman_to_numerals={
@@ -60,8 +61,9 @@ def ParseH12(h12_file):
     Output: 
     '''
     pos_list=[]
-    G1_list=[]
-
+    H12_list=[]
+    ratioH2H1_list=[]
+        
     #add position and values for each base to a dictionary for that chromosome
     f = open(h12_file)
     next(f)
@@ -69,8 +71,8 @@ def ParseH12(h12_file):
         row_data = line.strip().split("\t")
         peak_ctr=int(row_data[0])
         pos_list.append(peak_ctr)
-        G1_list.append(float(row_data[6]))
-        
+        H12_list.append(float(row_data[8]))
+        ratioH2H1_list.append(float(row_data[9]))
         #columns:
             #1ctrcoord (index 0)
             #2leftcoord
@@ -78,59 +80,60 @@ def ParseH12(h12_file):
             #4K
             #55hapfreqspec
             #6strainnum
-            #7H1 (index 6)
-            #8H2 (index 7)
+            #7H1
+            #8H2
             #9H12 (index 8)
             #10H2/H1 (index 9)
             #11H123 (index 10)
  
     f.close()
 
-    return pos_list, G1_list
+    return pos_list, H12_list, ratioH2H1_list
 
    
 
 def rankGenes(ann_dict, chrom_dict):
-    outfileName=save_prefix+'_g1_ranked.txt'
-    G1_dict={}
-    gene_G1s=[]
+    outfileName=save_prefix+'_ranked.txt'
+    H12_dict={}
+    gene_H12s=[]
+    gene_H2H1ratios=[]
     for chrom in ann_dict:
         pos_list=chrom_dict[chrom][0]
-        G1_list=chrom_dict[chrom][1]
+        H12_list=chrom_dict[chrom][1]
+        ratio_H2H1_list=chrom_dict[chrom][2]
         for gene in ann_dict[chrom]:
-            G1s=[]
+            H12s=[]
+            H2H1_ratios=[]
             start=ann_dict[chrom][gene][0]
             stop=ann_dict[chrom][gene][1]
             for i in range(len(pos_list)):
                 if start<pos_list[i]<stop:
-##                    if gene=="YAL056W":
-##                        print(gene)
-##                        print("H12 list")
-##                        print(H12_list[i])
-##                        print("H2/H1 ratios")
-##                        print(ratio_H2H1_list[i])
-                    G1s.append(G1_list[i])
+                    H12s.append(H12_list[i])
+                    H2H1_ratios.append(ratio_H2H1_list[i])
                     
 
-            if len(G1s)>0:
-                gene_G1=np.mean(G1s)
-                gene_G1s.append(gene_G1)
-                G1_dict[gene]=[gene_G1, chrom, start, stop]
+            if len(H12s)>0:
+                gene_H12=np.mean(H12s)
+                gene_H12s.append(gene_H12)
+                gene_H2H1ratio=np.mean(H2H1_ratios)
+                gene_H2H1ratios.append(gene_H2H1ratio)
+                H12_dict[gene]=[gene_H12, gene_H2H1ratio, chrom, start, stop]
 
     #print(sf2_dict['YAL054C'])
 
     with open(outfileName, 'w') as wf:
-        wf.writelines('gene\taverageG1\tchrom\tstart\tstop\n')
-        for k in sorted(G1_dict, key=G1_dict.get, reverse=True):
+        wf.writelines('gene\taverageH12\taverageH2H1ratio\tchrom\tstart\tstop\n')
+        for k in sorted(H12_dict, key=H12_dict.get, reverse=True):
             #print(gene)
             gene=k
-            avgG1=str(G1_dict[gene][0])
-            chrom=str(G1_dict[gene][1])
-            start=str(G1_dict[gene][2])
-            stop=str(G1_dict[gene][3]) 
-            wf.writelines(gene+'\t'+avgG1+'\t'+chrom+'\t'+start+'\t'+stop+'\n')
+            avgH12=str(H12_dict[gene][0])
+            avgH2H1ratio=str(H12_dict[gene][1])
+            chrom=str(H12_dict[gene][2])
+            start=str(H12_dict[gene][3])
+            stop=str(H12_dict[gene][4]) 
+            wf.writelines(gene+'\t'+avgH12+'\t'+avgH2H1ratio+'\t'+chrom+'\t'+start+'\t'+stop+'\n')
 
-    return G1_dict,gene_G1s
+    return H12_dict,gene_H12s, gene_H2H1ratios
 
 def plotHistHstats(gene_stats, stat):
 
@@ -159,7 +162,7 @@ chrom_dict={}
 #build chrom dict
 for h12file in filenames:
     #get pos and vals
-    pos_list, G1_list=ParseH12(h12file)
+    pos_list, H12_list, ratioH2H1_list=ParseH12(h12file)
     #get chromosome names
     prefix=h12file.split('.')[0]
     chrom=prefix.split('chromosome')[1]
@@ -167,7 +170,8 @@ for h12file in filenames:
         chrom='chr0'+chrom
     else:
         chrom='chr'+chrom
-    chrom_dict[chrom]=[pos_list, G1_list]
+    chrom_dict[chrom]=[pos_list, H12_list, ratioH2H1_list]
 
-h12_dict, gene_G1s = rankGenes(ann_dict, chrom_dict)
-plotHistHstats(gene_G1s, 'G1')
+h12_dict, gene_h12s, gene_H2H1ratios= rankGenes(ann_dict, chrom_dict)
+plotHistHstats(gene_h12s, 'H12')
+plotHistHstats(gene_H2H1ratios, 'H2H1ratio')

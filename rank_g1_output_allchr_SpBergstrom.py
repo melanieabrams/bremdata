@@ -3,24 +3,25 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 '''
-rank selecthapstats g1 (or h1) outputs by gene
+rank selecthapstats g1 (or g12) outputs by gene
 assuming file name in form: 
-merged_6AfricanBeer_chromosome1.h12_h1h2
+merged_6AfricanBeer_chromosome1.h12_h2h1
 
 '''
 #Parameters
-gff='/usr2/people/mabrams/Amended_Genomes/S288C/saccharomyces_cerevisiae_R64-1-1_20110208_withoutFasta.gff'
-roman_numerals_in_gff=True
+gff='/usr2/people/mabrams/Amended_Genomes/SaccSensuStricto/Spar.gff'
+roman_numerals_in_gff=False
 
 
 
 filenames = sys.argv[1:]
-save_prefix=filenames[0].split('_chromosome')[0]
+save_prefix=filenames[0].split('_Spar')[0]
 
 
 def ParseFromGFF(gfffile):
     '''
-    Parses gff
+    Parses SGD features flat file
+    Input: SGD_features.tab file
     Output: dict of {chrom:{gene:[start,stop]}}
     '''
     roman_to_numerals={
@@ -43,14 +44,18 @@ def ParseFromGFF(gfffile):
             start=int(row_data[3])
             stop=int(row_data[4])
             info=row_data[8].split(";")
-            yName=info[0].split('=')[1]
-            #print(yName)
-            if yName[0]=='Y' and len(yName)>5:
-                if chrom in ann_dict:
-                    ann_dict[chrom][yName]=[start,stop]
-                else:
-                    ann_dict[chrom]={yName:[start,stop]}
+            SGD=info[4]
+            if SGD!='SGD=':
+                yName=SGD.split('=')[1]
+
+                if yName[0]=='Y' and len(yName)>5:
+                    if chrom in ann_dict:
+                        ann_dict[chrom][yName]=[start,stop]
+                    else:
+                        ann_dict[chrom]={yName:[start,stop]}
     f.close()
+
+    print(ann_dict.keys())
     
     return ann_dict
 
@@ -103,12 +108,6 @@ def rankGenes(ann_dict, chrom_dict):
             stop=ann_dict[chrom][gene][1]
             for i in range(len(pos_list)):
                 if start<pos_list[i]<stop:
-##                    if gene=="YAL056W":
-##                        print(gene)
-##                        print("H12 list")
-##                        print(H12_list[i])
-##                        print("H2/H1 ratios")
-##                        print(ratio_H2H1_list[i])
                     G1s.append(G1_list[i])
                     
 
@@ -162,12 +161,8 @@ for h12file in filenames:
     pos_list, G1_list=ParseH12(h12file)
     #get chromosome names
     prefix=h12file.split('.')[0]
-    chrom=prefix.split('chromosome')[1]
-    if len(chrom)==1:
-        chrom='chr0'+chrom
-    else:
-        chrom='chr'+chrom
+    chrom=prefix.split('Spar_')[1]
     chrom_dict[chrom]=[pos_list, G1_list]
 
 h12_dict, gene_G1s = rankGenes(ann_dict, chrom_dict)
-plotHistHstats(gene_G1s, 'G1')
+#plotHistHstats(gene_G1s, 'G1')

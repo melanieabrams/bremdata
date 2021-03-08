@@ -7,9 +7,11 @@ import sys
 
 
 ##PARAMETERS
-#samples_to_exclude=['N-44','YPS138','UFRJ50816','IFO1804','Q31.4'] # for Bergstrom 2014 S paradoxus
+
+#samples_to_exclude=['Q31.4'] #for Bergstrom 2014 S paradoxus, excluding Q31.4 because it has a LOT of uncalled sites in the VCF
+
+#samples_to_exclude=['N-44','YPS138','UFRJ50816','IFO1804','Q31.4'] # for Bergstrom 2014 S paradoxus Wine/European
         #the first four of those ('N-44','YPS138','UFRJ50816','IFO1804') are outside of the population of interest but in the source vcf
-        #the last one (Q31.4) is there because it has a LOT of uncalled sites in the vcf
 
 samples_to_exclude=[] # for 1011 genomes (all pop)
 
