@@ -178,5 +178,5 @@ if __name__ == "__main__":
     tested_goi=test_goi_in_gff(goi,gff_genes)
 
     essential_genes=ParseEssential(essential_genes)
-    G1_dict=ParseRankedGenes(ranked_genes_G1)
+    G1_dict=ParseRankedGenes(ranked_genes_G1,goi)
     rv=resample(G1_dict,essential_genes,goi)
