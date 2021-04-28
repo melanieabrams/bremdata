@@ -52,7 +52,7 @@ print(lrt_dict)
 
 
 df=pd.DataFrame.from_dict(lrt_dict, orient='index',columns=['lrt'])
-df=df.reset_index()
+#df=df.reset_index()
 
 print(df)
 
@@ -63,6 +63,6 @@ pvalue_list=df['lrt'].tolist()
 fdrbh_output = smm.multipletests(pvalue_list, method='fdr_bh') # benjamini hochberg method
 adjusted_pvalues = np.asarray(fdrbh_output[1].tolist())
         
-df['bh_rv']=adjusted_pvalues
+df['bh_lrt']=adjusted_pvalues
 
 df.to_csv('bh_corrected_paml.tsv', sep='\t', index=True)
