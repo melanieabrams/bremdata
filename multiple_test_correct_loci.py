@@ -41,10 +41,11 @@ for gene in goi:
         sheetX = xls.parse(0) #https://stackoverflow.com/questions/2942889/reading-parsing-excel-xls-files-with-python/50815107
         var1 = sheetX['Unnamed: 9']
         LRT=float(var1[1]) #this is the LRT p-value location in the xls output of Faisal's PAML
+        lrt_dict[gene]=LRT
     except FileNotFoundError:
         missing_goi.append(gene)
 
-    lrt_dict[gene]=LRT
+    
     
 print('missing:'+str(missing_goi))
 
