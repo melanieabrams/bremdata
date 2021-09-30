@@ -1,3 +1,5 @@
+##THIS FILE IS MODIFIED FROM THE NXVIZ.CircosPlot to have a different color map (and call nxviz.[other script] instead of just .[other script] for import purposes).  Other than that it is *all* theirs!!!
+
 import logging
 from warnings import warn
 
